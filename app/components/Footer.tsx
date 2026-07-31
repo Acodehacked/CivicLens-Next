@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils/cn";
 import { Globe, Mail, MessageCircle } from "lucide-react";
 import Link from "next/link";
+import CivicLensLogo from "@/app/components/CivicLensLogo";
 
 interface FooterLinkGroup {
   title: string;
@@ -9,29 +10,29 @@ interface FooterLinkGroup {
 
 const linkGroups: FooterLinkGroup[] = [
   {
-    title: "Product",
+    title: "Platform",
     links: [
-      { label: "Community Map", href: "/map" },
+      { label: "Community Map", href: "/community-map" },
       { label: "Report an Issue", href: "/report" },
-      { label: "How It Works", href: "/#how-it-works" },
-      { label: "Features", href: "/#features" },
+      { label: "About CivicLens", href: "/about" },
+      { label: "Contact Support", href: "/contact" },
     ],
   },
   {
-    title: "Account",
+    title: "Citizen Portal",
     links: [
-      { label: "Portal Login", href: "/login" },
-      { label: "Admin Dashboard", href: "/admin" },
-      { label: "Contact", href: "/#contact" },
-      { label: "About", href: "/#about" },
+      { label: "Citizen Login", href: "/login" },
+      { label: "Submit Observation", href: "/report" },
+      { label: "Live Map View", href: "/community-map" },
+      { label: "How It Works", href: "/#how-it-works" },
     ],
   },
   {
-    title: "Legal",
+    title: "Legal & Privacy",
     links: [
       { label: "Privacy Policy", href: "#" },
       { label: "Terms of Service", href: "#" },
-      { label: "Cookie Policy", href: "#" },
+      { label: "Data Governance", href: "#" },
     ],
   },
 ];
@@ -39,7 +40,7 @@ const linkGroups: FooterLinkGroup[] = [
 export default function Footer() {
   return (
     <footer
-      className="w-full bg-surface-muted pt-24 pb-12 border-t border-border/50"
+      className="w-full bg-surface-muted pt-20 pb-12 border-t border-border/50"
       role="contentinfo"
     >
       <div className="max-w-[var(--container-max)] mx-auto px-6">
@@ -47,20 +48,18 @@ export default function Footer() {
           
           {/* Brand & Socials (takes up 2 cols on lg) */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            <Link href="/" className="text-2xl font-bold text-primary tracking-tight">
-              CivicLens
-            </Link>
+            <CivicLensLogo size={36} />
             <p className="text-sm text-on-surface-muted leading-relaxed max-w-sm">
-              Empowering municipalities through AI-driven Civic Intelligence and Institutional Modernism. Building better cities, together.
+              Empowering citizens and communities through transparent AI-driven civic reporting. Building cleaner, safer cities together.
             </p>
             <div className="flex gap-4 mt-2">
-              <a href="#" className="w-10 h-10 rounded-full bg-white border border-border/50 flex items-center justify-center text-on-surface-muted hover:text-primary hover:border-border transition-colors">
+              <a href="#" className="w-10 h-10 rounded-full bg-white border border-border/50 flex items-center justify-center text-on-surface-muted hover:text-[#2563EB] hover:border-[#2563EB]/40 transition-colors">
                 <Globe className="w-4 h-4" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white border border-border/50 flex items-center justify-center text-on-surface-muted hover:text-primary hover:border-border transition-colors">
+              <a href="#" className="w-10 h-10 rounded-full bg-white border border-border/50 flex items-center justify-center text-on-surface-muted hover:text-[#2563EB] hover:border-[#2563EB]/40 transition-colors">
                 <Mail className="w-4 h-4" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white border border-border/50 flex items-center justify-center text-on-surface-muted hover:text-primary hover:border-border transition-colors">
+              <a href="#" className="w-10 h-10 rounded-full bg-white border border-border/50 flex items-center justify-center text-on-surface-muted hover:text-[#2563EB] hover:border-[#2563EB]/40 transition-colors">
                 <MessageCircle className="w-4 h-4" />
               </a>
             </div>
@@ -77,7 +76,7 @@ export default function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-on-surface-muted hover:text-primary transition-colors duration-200"
+                      className="text-sm text-on-surface-muted hover:text-[#2563EB] transition-colors duration-200"
                     >
                       {link.label}
                     </Link>
@@ -94,7 +93,7 @@ export default function Footer() {
             © {new Date().getFullYear()} CivicLens Inc. All rights reserved.
           </p>
           <div className="flex items-center gap-2 text-sm text-on-surface-muted">
-             <div className="w-2 h-2 rounded-full bg-success" /> All systems operational
+             <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" /> Public Citizen Portal
           </div>
         </div>
       </div>

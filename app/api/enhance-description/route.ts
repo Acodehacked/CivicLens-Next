@@ -2,13 +2,13 @@ import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const apiKey = process.env.NEXT_PUBLIC_GROQ_API;
+  const apiKey = process.env.NEXT_PUBLIC_GROQ_API2 || process.env.NEXT_PUBLIC_GROQ_API;
 
   // Guard: make sure the key is present
   if (!apiKey) {
-    console.error("[enhance-description] NEXT_PUBLIC_GROQ_API is not set.");
+    console.error("[enhance-description] NEXT_PUBLIC_GROQ_API2 is not set.");
     return NextResponse.json(
-      { error: "AI service is not configured. NEXT_PUBLIC_GROQ_API missing." },
+      { error: "AI service is not configured. NEXT_PUBLIC_GROQ_API2 missing." },
       { status: 500 }
     );
   }
@@ -65,7 +65,6 @@ Guidelines:
 
     return NextResponse.json({ enhanced });
   } catch (err: any) {
-    // Surface the real error message in dev so it's diagnosable
     const detail = err?.message ?? String(err);
     console.error("[enhance-description] Groq error:", detail);
 

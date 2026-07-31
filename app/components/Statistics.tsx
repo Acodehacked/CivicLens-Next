@@ -15,7 +15,7 @@ export default function Statistics() {
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
-    <section ref={ref} className="w-full py-20 bg-primary text-white overflow-hidden">
+    <section ref={ref} className="w-full py-20 bg-gradient-to-r from-[#1E40AF] via-[#2563EB] to-[#1D4ED8] text-white overflow-hidden">
       <div className="max-w-[var(--container-max)] mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 divide-x divide-white/10">
           {stats.map((stat, i) => (

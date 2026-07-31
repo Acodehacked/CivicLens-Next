@@ -4,11 +4,11 @@ import { Circle, User, Building2, BrainCircuit } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const activities = [
-  { id: 1, type: "citizen", text: "Jane D. reported a Critical Pothole in Ward 4", time: "2m ago", icon: User, color: "blue" },
-  { id: 2, type: "ai", text: "AI detected 12 duplicate reports for 'Fallen Tree on Main'", time: "15m ago", icon: BrainCircuit, color: "purple" },
-  { id: 3, type: "dept", text: "Public Works resolved REP-082 (Streetlight)", time: "1h ago", icon: Building2, color: "green" },
-  { id: 4, type: "citizen", text: "Mark S. reported Water Leak in Downtown", time: "2h ago", icon: User, color: "blue" },
-  { id: 5, type: "ai", text: "AI escalated REP-102 to Critical Priority", time: "3h ago", icon: BrainCircuit, color: "red" },
+  { id: 1, type: "citizen", text: "Jane D. reported a Pothole routed to Road Maintenance Department", time: "2m ago", icon: User, color: "blue" },
+  { id: 2, type: "ai", text: "AI detected 12 duplicate reports for 'Fallen Tree' (Parks & Tree Maintenance)", time: "15m ago", icon: BrainCircuit, color: "purple" },
+  { id: 3, type: "dept", text: "Sanitation & Waste Management Department resolved REP-089", time: "1h ago", icon: Building2, color: "green" },
+  { id: 4, type: "citizen", text: "Mark S. reported Waterlogging in Downtown", time: "2h ago", icon: User, color: "blue" },
+  { id: 5, type: "ai", text: "AI routed REP-108 (Flood) to Disaster Management & Emergency Response Department", time: "3h ago", icon: BrainCircuit, color: "red" },
 ];
 
 export default function RecentActivity() {

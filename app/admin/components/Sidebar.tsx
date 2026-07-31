@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 import { 
   LayoutDashboard, 
-  MapPin, 
-  Map, 
   ListTodo, 
   BarChart3, 
   Building2, 
@@ -18,21 +16,22 @@ import {
   HelpCircle,
   PanelLeftClose,
   PanelLeftOpen,
-  Eye
+  ShieldCheck,
+  LogOut
 } from "lucide-react";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
-  { icon: Map, label: "Community Map", href: "#" },
-  { icon: ListTodo, label: "Priority Queue", href: "#", badge: 3 },
-  { icon: BarChart3, label: "Analytics", href: "#" },
-  { icon: Building2, label: "Departments", href: "#" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
+  { icon: ListTodo, label: "Priority Queue", href: "/admin/priority-queue", badge: 3 },
+  { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
+  { icon: Building2, label: "Departments", href: "/admin/departments" },
 ];
 
 const secondaryNavItems = [
-  { icon: Eye, label: "Citizen View", href: "/" },
-  { icon: History, label: "History", href: "#" },
-  { icon: Settings, label: "Settings", href: "#" },
+  { icon: History, label: "History Log", href: "/admin/history" },
+  { icon: Bell, label: "Notifications", href: "/admin/notifications" },
+  { icon: Settings, label: "Settings", href: "/admin/settings" },
+  { icon: HelpCircle, label: "Help & Support", href: "/admin/help" },
 ];
 
 export default function Sidebar() {
@@ -49,13 +48,18 @@ export default function Sidebar() {
       {/* Header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-border/50 shrink-0">
         {!collapsed && (
-          <Link href="/" className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shrink-0">
-              <Eye size={18} className="text-white" />
+          <Link href="/admin/dashboard" className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
+            <div className="w-8 h-8 bg-[#2563EB] rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+              <ShieldCheck size={18} className="text-white" />
             </div>
-            <span className="font-bold text-primary tracking-tight text-lg">
-              CivicLens
-            </span>
+            <div className="flex flex-col">
+              <span className="font-bold text-primary tracking-tight text-base leading-none">
+                CivicLens
+              </span>
+              <span className="text-[10px] font-black text-[#2563EB] uppercase tracking-wider mt-0.5">
+                Admin Console
+              </span>
+            </div>
           </Link>
         )}
         <button 
@@ -72,7 +76,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-5 px-3 flex flex-col gap-1 custom-scrollbar">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href === "/admin/dashboard" && pathname === "/admin");
           return (
             <Link
               key={item.label}
@@ -81,7 +85,7 @@ export default function Sidebar() {
               className={cn(
                 "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200",
                 isActive 
-                  ? "bg-blue-50/80 text-blue-700" 
+                  ? "bg-blue-50/80 text-blue-700 font-bold" 
                   : "text-slate-500 hover:bg-slate-50 hover:text-primary"
               )}
             >
@@ -110,31 +114,39 @@ export default function Sidebar() {
         <div className="mt-8 mb-2">
           {!collapsed && (
             <div className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-              System
+              System Admin
             </div>
           )}
           <div className="flex flex-col gap-1">
-            {secondaryNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                title={collapsed ? item.label : undefined}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:bg-slate-50 hover:text-primary transition-colors group"
-              >
-                <item.icon size={18} className="shrink-0" />
-                {!collapsed && (
-                  <span className="truncate">{item.label}</span>
-                )}
-              </Link>
-            ))}
+            {secondaryNavItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  title={collapsed ? item.label : undefined}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors group",
+                    isActive
+                      ? "bg-blue-50/80 text-blue-700 font-bold"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-primary"
+                  )}
+                >
+                  <item.icon size={18} className="shrink-0" />
+                  {!collapsed && (
+                    <span className="truncate">{item.label}</span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </nav>
 
       {/* User Profile */}
       <div className="p-4 border-t border-border/50 shrink-0">
-        <button className={cn(
-          "flex items-center w-full gap-3 p-2 -m-2 rounded-xl hover:bg-slate-50 transition-colors text-left",
+        <div className={cn(
+          "flex items-center w-full gap-3 p-2 rounded-xl transition-colors text-left",
           collapsed && "justify-center"
         )}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shrink-0 border border-border shadow-sm flex items-center justify-center text-white font-bold text-xs ring-2 ring-white">
@@ -146,7 +158,12 @@ export default function Sidebar() {
               <div className="text-[11px] font-medium text-slate-500 truncate">City Administrator</div>
             </div>
           )}
-        </button>
+          {!collapsed && (
+            <Link href="/admin/login" title="Logout" className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+              <LogOut size={16} />
+            </Link>
+          )}
+        </div>
       </div>
     </aside>
   );

@@ -1,15 +1,15 @@
 import { ReactNode } from "react";
-import Sidebar from "./components/Sidebar";
-import TopNav from "./components/TopNav";
+import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
 
 export default function ReportLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-screen w-full bg-[#F8FAFC] overflow-hidden text-sm">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <TopNav />
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
+      <Navbar />
+      <div className="flex-1 pt-16 flex flex-col">
         {children}
       </div>
+      <Footer />
     </div>
   );
 }

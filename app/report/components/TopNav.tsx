@@ -2,6 +2,7 @@
 
 import { Search, Bell, User } from "lucide-react";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default function TopNav() {
   const currentDate = format(new Date(), "EEEE, MMMM do, yyyy");
@@ -39,14 +40,22 @@ export default function TopNav() {
             <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">AI Engine Active</span>
           </div>
           
-          <button className="relative w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-sm">
+          <Link 
+            href="/notifications" 
+            title="Notification Center"
+            className="relative w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-sm"
+          >
             <Bell size={18} />
             <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-          </button>
+          </Link>
           
-          <button className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+          <Link 
+            href="/settings" 
+            title="User Profile & Settings"
+            className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+          >
             JD
-          </button>
+          </Link>
         </div>
       </div>
     </header>

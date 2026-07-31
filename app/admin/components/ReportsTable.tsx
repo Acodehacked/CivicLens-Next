@@ -4,10 +4,56 @@ import { Search, SlidersHorizontal, ChevronDown, MoreHorizontal } from "lucide-r
 import { cn } from "@/lib/utils/cn";
 
 const mockReports = [
-  { id: "REP-104", img: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=100&q=80", category: "Pothole", severity: "High", status: "Open", dept: "Public Works", reporter: "Jane D.", time: "10m ago" },
-  { id: "REP-105", img: "https://images.unsplash.com/photo-1594950893301-44755f190e22?auto=format&fit=crop&w=100&q=80", category: "Fallen Tree", severity: "Critical", status: "In Progress", dept: "Parks", reporter: "Alex M.", time: "45m ago" },
-  { id: "REP-106", img: "https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&w=100&q=80", category: "Streetlight", severity: "Medium", status: "Open", dept: "Electricity", reporter: "Sarah T.", time: "1h ago" },
-  { id: "REP-107", img: "https://images.unsplash.com/photo-1541888047913-91ee71212c41?auto=format&fit=crop&w=100&q=80", category: "Water Leak", severity: "Low", status: "Resolved", dept: "Water", reporter: "Mike R.", time: "2h ago" },
+  {
+    id: "REP-104",
+    img: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=100&q=80",
+    category: "Pothole",
+    severity: "High",
+    status: "Open",
+    dept: "Road Maintenance Department",
+    reporter: "Jane D.",
+    time: "10m ago"
+  },
+  {
+    id: "REP-105",
+    img: "https://images.unsplash.com/photo-1594950893301-44755f190e22?auto=format&fit=crop&w=100&q=80",
+    category: "Fallen Tree",
+    severity: "Critical",
+    status: "In Progress",
+    dept: "Parks & Tree Maintenance Department",
+    reporter: "Alex M.",
+    time: "45m ago"
+  },
+  {
+    id: "REP-108",
+    img: "https://images.unsplash.com/photo-1541888047913-91ee71212c41?auto=format&fit=crop&w=100&q=80",
+    category: "Flood",
+    severity: "Critical",
+    status: "In Progress",
+    dept: "Disaster Management & Emergency Response Department",
+    reporter: "Sarah T.",
+    time: "1h ago"
+  },
+  {
+    id: "REP-112",
+    img: "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=100&q=80",
+    category: "Waterlogging",
+    severity: "High",
+    status: "Open",
+    dept: "Drainage & Stormwater Department",
+    reporter: "Mike R.",
+    time: "2h ago"
+  },
+  {
+    id: "REP-119",
+    img: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=100&q=80",
+    category: "Garbage",
+    severity: "Medium",
+    status: "Resolved",
+    dept: "Sanitation & Waste Management Department",
+    reporter: "Priya N.",
+    time: "4h ago"
+  },
 ];
 
 export default function ReportsTable() {
@@ -17,7 +63,7 @@ export default function ReportsTable() {
       <div className="p-5 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h3 className="font-bold text-primary">Recent Reports</h3>
-          <p className="text-[11px] font-semibold text-slate-400">Live feed of civic observations</p>
+          <p className="text-[11px] font-semibold text-slate-400">Live feed of AI-routed civic issues</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
@@ -39,10 +85,10 @@ export default function ReportsTable() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-border/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              <th className="px-5 py-3 font-bold">Report</th>
+              <th className="px-5 py-3 font-bold">Report Category</th>
               <th className="px-5 py-3 font-bold">Severity</th>
               <th className="px-5 py-3 font-bold">Status</th>
-              <th className="px-5 py-3 font-bold">Department</th>
+              <th className="px-5 py-3 font-bold">Assigned Department</th>
               <th className="px-5 py-3 font-bold text-right">Actions</th>
             </tr>
           </thead>
@@ -80,7 +126,7 @@ export default function ReportsTable() {
                     {report.status}
                   </div>
                 </td>
-                <td className="px-5 py-3 text-xs font-semibold text-slate-600">
+                <td className="px-5 py-3 text-xs font-semibold text-[#2563EB]">
                   {report.dept}
                 </td>
                 <td className="px-5 py-3 text-right">

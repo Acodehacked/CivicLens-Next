@@ -14,10 +14,10 @@ const timeData = [
 
 const catData = [
   { name: "Potholes", count: 120 },
-  { name: "Streetlights", count: 85 },
-  { name: "Sanitation", count: 65 },
-  { name: "Drainage", count: 40 },
-  { name: "Parks", count: 25 },
+  { name: "Garbage", count: 95 },
+  { name: "Waterlogging", count: 70 },
+  { name: "Fallen Trees", count: 45 },
+  { name: "Floods", count: 28 },
 ];
 
 export default function AnalyticsCharts() {
@@ -27,7 +27,7 @@ export default function AnalyticsCharts() {
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden p-5">
         <div className="mb-4">
           <h3 className="font-bold text-primary">Reports vs. Resolutions</h3>
-          <p className="text-[11px] font-semibold text-slate-400">Past 7 days trend</p>
+          <p className="text-[11px] font-semibold text-slate-400">Past 7 days trend across official departments</p>
         </div>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -60,8 +60,8 @@ export default function AnalyticsCharts() {
       {/* Bar Chart: Reports By Category */}
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden p-5">
         <div className="mb-4">
-          <h3 className="font-bold text-primary">Issues by Category</h3>
-          <p className="text-[11px] font-semibold text-slate-400">Top 5 reported categories this week</p>
+          <h3 className="font-bold text-primary">Issues by Official Category</h3>
+          <p className="text-[11px] font-semibold text-slate-400">Reports across 5 official AI-detected categories</p>
         </div>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
