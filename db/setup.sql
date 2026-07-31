@@ -183,3 +183,26 @@ insert into public.departments (name, contact_email) values
   ('disaster_management', null),
   ('parks', null)
 on conflict (name) do nothing;
+
+-- ---------------------------------------------------------------------
+-- 7. Storage bucket for report photos (lib/supabase/storage.ts's
+-- uploadReportImage). Public, and insert is open to anon + authenticated -
+-- reports.reporter_id is nullable, so citizens can submit without an
+-- account. The FastAPI detection backend fetches the image by public URL,
+-- so this bucket must stay public (unlike "avatars", uploads aren't
+-- scoped to a per-user folder since there's no user to scope to).
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('reports', 'reports', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Report images are publicly accessible" on storage.objects;
+drop policy if exists "Anyone can upload a report image" on storage.objects;
+
+create policy "Report images are publicly accessible"
+  on storage.objects for select
+  using (bucket_id = 'reports');
+
+create policy "Anyone can upload a report image"
+  on storage.objects for insert
+  with check (bucket_id = 'reports');
