@@ -14,9 +14,19 @@ const navLinks = [
   { label: "Features", href: "/#features" },
 ];
 
-export default function Navbar() {
+type CurrentUser = { displayName: string; href: string } | null;
+
+export default function Navbar({ currentUser = null }: { currentUser?: CurrentUser }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const initials = currentUser
+    ? currentUser.displayName
+        .split(" ")
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : null;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -76,12 +86,24 @@ export default function Navbar() {
 
         {/* CTA + Mobile Toggle */}
         <div className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="hidden sm:inline-flex bg-primary text-white px-5 py-2 rounded-full text-sm font-medium tracking-wide hover:bg-primary-hover active:scale-[0.98] transition-all duration-200 shadow-sm hover:shadow-md"
-          >
-            Portal Login
-          </Link>
+          {currentUser ? (
+            <Link
+              href={currentUser.href}
+              className="hidden sm:inline-flex items-center gap-2 bg-white border border-border px-2 py-1.5 pr-4 rounded-full text-sm font-medium tracking-wide text-primary hover:bg-surface-muted active:scale-[0.98] transition-all duration-200 shadow-sm"
+            >
+              <span className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0">
+                {initials}
+              </span>
+              {currentUser.displayName}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex bg-primary text-white px-5 py-2 rounded-full text-sm font-medium tracking-wide hover:bg-primary-hover active:scale-[0.98] transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              Portal Login
+            </Link>
+          )}
 
           {/* Mobile menu button */}
           <button
@@ -125,13 +147,26 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/login"
-                className="mt-4 bg-primary text-white py-3 px-4 rounded-xl text-sm font-medium text-center hover:bg-primary-hover transition-colors sm:hidden shadow-sm"
-                onClick={() => setMobileOpen(false)}
-              >
-                Portal Login
-              </Link>
+              {currentUser ? (
+                <Link
+                  href={currentUser.href}
+                  className="mt-4 flex items-center justify-center gap-2 bg-primary text-white py-3 px-4 rounded-xl text-sm font-medium text-center hover:bg-primary-hover transition-colors sm:hidden shadow-sm"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs shrink-0">
+                    {initials}
+                  </span>
+                  {currentUser.displayName}
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="mt-4 bg-primary text-white py-3 px-4 rounded-xl text-sm font-medium text-center hover:bg-primary-hover transition-colors sm:hidden shadow-sm"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Portal Login
+                </Link>
+              )}
             </nav>
           </motion.div>
         )}

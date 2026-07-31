@@ -5,20 +5,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
-import { 
-  LayoutDashboard, 
-  MapPin, 
-  Map, 
-  ListTodo, 
-  BarChart3, 
-  Building2, 
-  History, 
-  Bell, 
-  Settings, 
+import { LogoutButton } from "@/components/logout-button";
+import {
+  LayoutDashboard,
+  MapPin,
+  Map,
+  ListTodo,
+  BarChart3,
+  Building2,
+  History,
+  Bell,
+  Settings,
   HelpCircle,
   PanelLeftClose,
   PanelLeftOpen,
-  Eye
+  Eye,
+  LogOut
 } from "lucide-react";
 
 const navItems = [
@@ -35,9 +37,21 @@ const secondaryNavItems = [
   { icon: Settings, label: "Settings", href: "#" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  displayName,
+  roleLabel,
+}: {
+  displayName: string;
+  roleLabel: string;
+}) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <aside 
@@ -133,20 +147,26 @@ export default function Sidebar() {
 
       {/* User Profile */}
       <div className="p-4 border-t border-border/50 shrink-0">
-        <button className={cn(
-          "flex items-center w-full gap-3 p-2 -m-2 rounded-xl hover:bg-slate-50 transition-colors text-left",
-          collapsed && "justify-center"
+        <div className={cn(
+          "flex items-center w-full gap-3 p-2 -m-2 rounded-xl text-left",
+          collapsed && "flex-col justify-center"
         )}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shrink-0 border border-border shadow-sm flex items-center justify-center text-white font-bold text-xs ring-2 ring-white">
-            JD
+            {initials || "?"}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-primary truncate text-sm">Jane Doe</div>
-              <div className="text-[11px] font-medium text-slate-500 truncate">City Administrator</div>
+              <div className="font-bold text-primary truncate text-sm">{displayName}</div>
+              <div className="text-[11px] font-medium text-slate-500 truncate">{roleLabel}</div>
             </div>
           )}
-        </button>
+          <LogoutButton
+            redirectTo="/office/login"
+            className="shrink-0 p-2 rounded-lg border-none text-slate-400 hover:bg-slate-100 hover:text-red-600 transition-colors"
+          >
+            <LogOut size={16} />
+          </LogoutButton>
+        </div>
       </div>
     </aside>
   );

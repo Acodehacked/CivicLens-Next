@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Bell, Sparkles, Calendar as CalendarIcon, Download, Menu, X, Eye, LayoutDashboard, Map, ListTodo, BarChart3, Building2, History, Settings } from "lucide-react";
+import { Search, Bell, Sparkles, Calendar as CalendarIcon, Download, Menu, X, Eye, LayoutDashboard, Map, ListTodo, BarChart3, Building2, History, Settings, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
+import { LogoutButton } from "@/components/logout-button";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
@@ -22,10 +23,22 @@ const secondaryNavItems = [
   { icon: Settings, label: "Settings", href: "#" },
 ];
 
-export default function TopNav() {
+export default function TopNav({
+  displayName,
+  roleLabel,
+}: {
+  displayName: string;
+  roleLabel: string;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentDate = format(new Date(), "MMM d, yyyy");
   const pathname = usePathname();
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -106,6 +119,20 @@ export default function TopNav() {
             <Bell size={18} />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
+
+          <div className="w-px h-6 bg-slate-200 hidden sm:block mx-1" />
+
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm border border-slate-200">
+              {initials || "?"}
+            </div>
+            <LogoutButton
+              redirectTo="/office/login"
+              className="p-2 rounded-lg border-none text-slate-400 hover:bg-slate-50 hover:text-red-600 transition-colors"
+            >
+              <LogOut size={16} />
+            </LogoutButton>
+          </div>
         </div>
       </header>
 
@@ -199,12 +226,18 @@ export default function TopNav() {
               <div className="p-4 border-t border-border/50 shrink-0 bg-slate-50/50">
                 <div className="flex items-center gap-3 p-2 rounded-xl">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shrink-0 shadow-sm flex items-center justify-center text-white font-bold text-sm ring-2 ring-white">
-                    JD
+                    {initials || "?"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-primary truncate text-sm">Jane Doe</div>
-                    <div className="text-xs font-medium text-slate-500 truncate">City Administrator</div>
+                    <div className="font-bold text-primary truncate text-sm">{displayName}</div>
+                    <div className="text-xs font-medium text-slate-500 truncate">{roleLabel}</div>
                   </div>
+                  <LogoutButton
+                    redirectTo="/office/login"
+                    className="shrink-0 p-2 rounded-lg border-none text-slate-400 hover:bg-slate-100 hover:text-red-600 transition-colors"
+                  >
+                    <LogOut size={16} />
+                  </LogoutButton>
                 </div>
               </div>
             </motion.div>

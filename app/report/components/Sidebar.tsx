@@ -1,20 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
-import { 
-  LayoutDashboard, 
-  MapPin, 
-  Map, 
-  ListTodo, 
-  BarChart3, 
-  Building2, 
-  History, 
-  Bell, 
-  Settings, 
+import { LogoutButton } from "@/components/logout-button";
+import {
+  LayoutDashboard,
+  MapPin,
+  Map,
+  ListTodo,
+  BarChart3,
+  Building2,
+  History,
+  Bell,
+  Settings,
   HelpCircle,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  LogOut
 } from "lucide-react";
 
 const navItems = [
@@ -33,8 +36,22 @@ const secondaryNavItems = [
   { icon: HelpCircle, label: "Help", href: "#" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  displayName,
+  email,
+}: {
+  displayName: string | null;
+  email: string | null;
+}) {
   const [collapsed, setCollapsed] = useState(false);
+  const initials = displayName
+    ? displayName
+        .split(" ")
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "?";
 
   return (
     <aside 
@@ -112,20 +129,46 @@ export default function Sidebar() {
 
       {/* User Profile */}
       <div className="p-4 border-t border-border/50">
-        <button className={cn(
-          "flex items-center w-full gap-3 p-2 -m-2 rounded-lg hover:bg-surface-muted transition-colors text-left",
-          collapsed && "justify-center"
-        )}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-purple-500 shrink-0 border border-border shadow-sm flex items-center justify-center text-white font-bold text-xs">
-            JD
-          </div>
-          {!collapsed && (
-            <div className="flex-1 overflow-hidden">
-              <div className="font-semibold text-primary truncate text-sm">Jane Doe</div>
-              <div className="text-xs text-on-surface-muted truncate">jane.doe@city.gov</div>
+        {displayName ? (
+          <div className={cn(
+            "flex items-center w-full gap-3 p-2 -m-2 rounded-lg text-left",
+            collapsed && "flex-col justify-center"
+          )}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-purple-500 shrink-0 border border-border shadow-sm flex items-center justify-center text-white font-bold text-xs">
+              {initials}
             </div>
-          )}
-        </button>
+            {!collapsed && (
+              <div className="flex-1 overflow-hidden">
+                <div className="font-semibold text-primary truncate text-sm">{displayName}</div>
+                <div className="text-xs text-on-surface-muted truncate">{email}</div>
+              </div>
+            )}
+            <LogoutButton
+              redirectTo="/"
+              className="shrink-0 p-2 rounded-lg border-none text-on-surface-muted hover:bg-surface-muted hover:text-red-600 transition-colors"
+            >
+              <LogOut size={16} />
+            </LogoutButton>
+          </div>
+        ) : (
+          <Link
+            href="/login"
+            className={cn(
+              "flex items-center w-full gap-3 p-2 -m-2 rounded-lg hover:bg-surface-muted transition-colors text-left",
+              collapsed && "justify-center"
+            )}
+          >
+            <div className="w-8 h-8 rounded-full bg-surface-muted border border-border shrink-0 flex items-center justify-center text-on-surface-muted font-bold text-xs">
+              ?
+            </div>
+            {!collapsed && (
+              <div className="flex-1 overflow-hidden">
+                <div className="font-semibold text-primary truncate text-sm">Guest</div>
+                <div className="text-xs text-on-surface-muted truncate">Sign in to track reports</div>
+              </div>
+            )}
+          </Link>
+        )}
       </div>
     </aside>
   );
