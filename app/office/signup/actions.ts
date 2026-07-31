@@ -27,31 +27,45 @@ export async function signupDepartmentStaff(
   }
 
   const { fullName, email, password, department } = parsed.data;
-  const supabase = await createClient();
-  const siteUrl = await getSiteUrl();
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${siteUrl}/auth/callback`,
-      data: {
-        account_type: "department_staff",
-        full_name: fullName,
-        department,
+  let shouldRedirect = false;
+  let result: AuthFormState;
+
+  try {
+    const supabase = await createClient();
+    const siteUrl = await getSiteUrl();
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${siteUrl}/auth/callback`,
+        data: {
+          account_type: "department_staff",
+          full_name: fullName,
+          department,
+        },
       },
-    },
-  });
+    });
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      console.error("[signupDepartmentStaff] supabase.auth.signUp error:", error);
+      result = { error: error.message };
+    } else if (!data.session) {
+      result = {
+        message: "Account created. Check your email to confirm it before signing in.",
+      };
+    } else {
+      shouldRedirect = true;
+    }
+  } catch (err) {
+    console.error("[signupDepartmentStaff] unexpected error:", err);
+    result = { error: "Something went wrong creating your account. Please try again." };
   }
 
-  if (!data.session) {
-    return {
-      message: "Account created. Check your email to confirm it before signing in.",
-    };
+  if (shouldRedirect) {
+    redirect("/admin");
   }
 
-  redirect("/admin");
+  return result;
 }

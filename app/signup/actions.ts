@@ -27,34 +27,47 @@ export async function signupCitizen(
   const { fullName, email, password, address, mobileNumber, aadhaarNumber, profession } =
     parsed.data;
 
-  const supabase = await createClient();
-  const siteUrl = await getSiteUrl();
+  let shouldRedirect = false;
+  let result: AuthFormState;
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${siteUrl}/auth/callback`,
-      data: {
-        account_type: "citizen",
-        full_name: fullName,
-        address,
-        mobile_number: mobileNumber,
-        aadhaar_number: aadhaarNumber || null,
-        profession,
+  try {
+    const supabase = await createClient();
+    const siteUrl = await getSiteUrl();
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${siteUrl}/auth/callback`,
+        data: {
+          account_type: "citizen",
+          full_name: fullName,
+          address,
+          mobile_number: mobileNumber,
+          aadhaar_number: aadhaarNumber || null,
+          profession,
+        },
       },
-    },
-  });
+    });
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      console.error("[signupCitizen] supabase.auth.signUp error:", error);
+      result = { error: error.message };
+    } else if (!data.session) {
+      result = {
+        message: "Account created. Check your email to confirm it before signing in.",
+      };
+    } else {
+      shouldRedirect = true;
+    }
+  } catch (err) {
+    console.error("[signupCitizen] unexpected error:", err);
+    result = { error: "Something went wrong creating your account. Please try again." };
   }
 
-  if (!data.session) {
-    return {
-      message: "Account created. Check your email to confirm it before signing in.",
-    };
+  if (shouldRedirect) {
+    redirect("/report");
   }
 
-  redirect("/report");
+  return result;
 }

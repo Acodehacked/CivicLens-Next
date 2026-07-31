@@ -20,33 +20,59 @@ export async function loginCitizen(
   }
 
   const { email, password } = parsed.data;
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
 
-  if (error) {
-    return { error: "Invalid email or password." };
+  let shouldRedirect = false;
+  let result: AuthFormState;
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("[loginCitizen] signInWithPassword error:", error);
+      result = { error: "Invalid email or password." };
+    } else {
+      shouldRedirect = true;
+    }
+  } catch (err) {
+    console.error("[loginCitizen] unexpected error:", err);
+    result = { error: "Something went wrong signing you in. Please try again." };
   }
 
-  redirect("/report");
+  if (shouldRedirect) {
+    redirect("/report");
+  }
+
+  return result;
 }
 
 export async function loginCitizenWithGoogle() {
-  const supabase = await createClient();
-  const siteUrl = await getSiteUrl();
+  let destination: string;
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${siteUrl}/auth/callback`,
-    },
-  });
+  try {
+    const supabase = await createClient();
+    const siteUrl = await getSiteUrl();
 
-  if (error || !data.url) {
-    redirect(`/login?error=${encodeURIComponent(error?.message ?? "Google sign-in failed.")}`);
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${siteUrl}/auth/callback`,
+      },
+    });
+
+    if (error || !data.url) {
+      console.error("[loginCitizenWithGoogle] signInWithOAuth error:", error);
+      destination = `/login?error=${encodeURIComponent(error?.message ?? "Google sign-in failed.")}`;
+    } else {
+      destination = data.url;
+    }
+  } catch (err) {
+    console.error("[loginCitizenWithGoogle] unexpected error:", err);
+    destination = `/login?error=${encodeURIComponent("Google sign-in failed.")}`;
   }
 
-  redirect(data.url);
+  redirect(destination);
 }

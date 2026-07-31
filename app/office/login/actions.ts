@@ -19,15 +19,31 @@ export async function loginDepartment(
   }
 
   const { email, password } = parsed.data;
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
 
-  if (error) {
-    return { error: "Invalid email or password." };
+  let shouldRedirect = false;
+  let result: AuthFormState;
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("[loginDepartment] signInWithPassword error:", error);
+      result = { error: "Invalid email or password." };
+    } else {
+      shouldRedirect = true;
+    }
+  } catch (err) {
+    console.error("[loginDepartment] unexpected error:", err);
+    result = { error: "Something went wrong signing you in. Please try again." };
   }
 
-  redirect("/admin");
+  if (shouldRedirect) {
+    redirect("/admin");
+  }
+
+  return result;
 }

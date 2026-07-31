@@ -41,7 +41,7 @@ drizzle.config.ts
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. Copy `.env.example` to `.env` and fill in:
-   - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Project Settings → API
+   - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` — Project Settings → API
    - `DATABASE_URL` — Project Settings → Database → Connection string (URI). Use the direct connection (port 5432) for local dev/migrations.
 3. Install dependencies and push the schema:
    ```bash
