@@ -1,42 +1,36 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState, startTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User, MapPin, Phone, IdCard, Briefcase, Loader2 } from "lucide-react";
 import { completeProfile } from "../actions";
+import { completeProfileSchema, type CompleteProfileValues } from "../schema";
 import { PROFESSIONS } from "@/lib/constants/professions";
 
-type DefaultValues = {
-  fullName: string;
-  address: string;
-  mobileNumber: string;
-  aadhaarNumber: string;
-  profession: string;
-};
+export default function CompleteProfileForm({ defaultValues }: { defaultValues: CompleteProfileValues }) {
+  const [state, formAction, isPending] = useActionState(completeProfile, undefined);
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CompleteProfileValues>({
+    resolver: zodResolver(completeProfileSchema),
+    defaultValues,
+  });
 
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full mt-2 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary-hover hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
-    >
-      {pending ? (
-        <>
-          <Loader2 size={18} className="animate-spin" />
-          Saving...
-        </>
-      ) : (
-        "Save and Continue"
-      )}
-    </button>
-  );
-}
-
-export default function CompleteProfileForm({ defaultValues }: { defaultValues: DefaultValues }) {
-  const [state, formAction] = useActionState(completeProfile, undefined);
+  function onValid(values: CompleteProfileValues) {
+    const formData = new FormData();
+    formData.set("fullName", values.fullName);
+    formData.set("address", values.address);
+    formData.set("mobileNumber", values.mobileNumber);
+    formData.set("aadhaarNumber", values.aadhaarNumber ?? "");
+    formData.set("profession", values.profession);
+    startTransition(() => {
+      formAction(formData);
+    });
+  }
 
   return (
     <div className="w-full max-w-[420px] flex flex-col bg-white border border-border rounded-2xl shadow-sm p-8">
@@ -47,7 +41,7 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
         </p>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-5" noValidate>
         {state?.error && (
           <div className="rounded-xl bg-error-bg border border-error/20 px-4 py-3 text-sm font-medium text-error">
             {state.error}
@@ -61,14 +55,13 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
               <User size={18} />
             </div>
             <input
-              name="fullName"
+              {...register("fullName")}
               id="fullName"
               type="text"
-              required
-              defaultValue={defaultValues.fullName}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
           </div>
+          {errors.fullName && <span className="text-xs font-medium text-error">{errors.fullName.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -78,15 +71,14 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
               <Phone size={18} />
             </div>
             <input
-              name="mobileNumber"
+              {...register("mobileNumber")}
               id="mobileNumber"
               type="tel"
-              required
-              defaultValue={defaultValues.mobileNumber}
               placeholder="10-digit mobile number"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
           </div>
+          {errors.mobileNumber && <span className="text-xs font-medium text-error">{errors.mobileNumber.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -96,15 +88,14 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
               <MapPin size={18} />
             </div>
             <textarea
-              name="address"
+              {...register("address")}
               id="address"
-              required
               rows={2}
-              defaultValue={defaultValues.address}
               placeholder="House no, street, area, city"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm resize-none"
             />
           </div>
+          {errors.address && <span className="text-xs font-medium text-error">{errors.address.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -114,10 +105,9 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
               <Briefcase size={18} />
             </div>
             <select
-              name="profession"
+              {...register("profession")}
               id="profession"
-              required
-              defaultValue={defaultValues.profession}
+              defaultValue=""
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm appearance-none"
             >
               <option value="" disabled>Select your profession</option>
@@ -126,6 +116,7 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
               ))}
             </select>
           </div>
+          {errors.profession && <span className="text-xs font-medium text-error">{errors.profession.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -137,17 +128,30 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
               <IdCard size={18} />
             </div>
             <input
-              name="aadhaarNumber"
+              {...register("aadhaarNumber")}
               id="aadhaarNumber"
               type="text"
-              defaultValue={defaultValues.aadhaarNumber}
               placeholder="12-digit Aadhaar number"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
           </div>
+          {errors.aadhaarNumber && <span className="text-xs font-medium text-error">{errors.aadhaarNumber.message}</span>}
         </div>
 
-        <SubmitButton />
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full mt-2 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary-hover hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
+        >
+          {isPending ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save and Continue"
+          )}
+        </button>
       </form>
     </div>
   );

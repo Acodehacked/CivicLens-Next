@@ -1,18 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import * as z from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/utils/site-url";
-import { DEPARTMENTS } from "@/lib/constants/departments";
+import { departmentSignupSchema } from "./schema";
 import type { AuthFormState } from "@/lib/auth/types";
-
-const departmentSignupSchema = z.object({
-  fullName: z.string().trim().min(2, "Enter your full name."),
-  email: z.email("Please enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
-  department: z.enum(DEPARTMENTS, "Select a department."),
-});
 
 // Self-service for now: creates a `department_staff` account tied to one
 // department. It can never create a full `admin` account - the DB trigger
