@@ -177,7 +177,7 @@ Recalculate Priority
 
 ---
 
-# 🔍 AI Model
+# 🔍 AI Model Training
 
 ### Object Detection
 
@@ -190,7 +190,7 @@ Recalculate Priority
 ### Dataset
 
 - Combined multiple Roboflow Universe datasets
-- Total Images: ~18,214
+- Total Images: ~15k+
 - Categories:
   - Potholes
   - Flooding
@@ -358,3 +358,8 @@ By combining computer vision, semantic similarity search, intelligent prioritiza
 ## 📄 License
 
 This project was developed as part of a hackathon/research initiative and is intended for educational and demonstration purposes.
+
+## Links
+Google Collab: https://colab.research.google.com/drive/1UqcqBbEUP54RXrlwOLBoYwxeeeWJxZrA?usp=sharing&authuser=1#scrollTo=lzhQKKUIoHM0
+
+Notion: https://app.notion.com/p/CivicLens-3ae4454561198036b4abd180154e0229?source=copy_link
