@@ -29,17 +29,18 @@ export default function MapLegend() {
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-sm" />
                 <span className="text-sm font-semibold text-slate-700">Critical</span>
-                <span className="text-xs text-slate-400 ml-auto">90-100</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 rounded-full bg-orange-500 border-2 border-white shadow-sm" />
                 <span className="text-sm font-semibold text-slate-700">High</span>
-                <span className="text-xs text-slate-400 ml-auto">70-89</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 rounded-full bg-yellow-500 border-2 border-white shadow-sm" />
                 <span className="text-sm font-semibold text-slate-700">Medium</span>
-                <span className="text-xs text-slate-400 ml-auto">40-69</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-sm" />
+                <span className="text-sm font-semibold text-slate-700">Low</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-sm" />

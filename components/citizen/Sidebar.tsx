@@ -18,7 +18,7 @@ import {
 
 const navItems = [
   { icon: MapPin, label: "Report New Issue", href: "/report" },
-  { icon: Map, label: "Community Map", href: "/map" },
+  { icon: Map, label: "Community Map", href: "/community-map" },
   { icon: ListChecks, label: "My Reports", href: "/my-reports" },
   { icon: Radio, label: "Live Feed", href: "/live" },
   { icon: Building2, label: "Departments", href: "/departments" },

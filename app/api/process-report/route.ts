@@ -31,18 +31,29 @@ export async function POST(request: Request) {
       }),
     });
 
-    const data = await res.json().catch(() => null);
+    const rawBody = await res.text();
+    const data = (() => {
+      try {
+        return JSON.parse(rawBody);
+      } catch {
+        return null;
+      }
+    })();
 
     if (!res.ok) {
-      console.error("[process-report] backend error:", res.status, data);
-      return NextResponse.json(
-        {
-          error:
-            data?.detail ??
-            "No civic issue could be detected in this image. Try a clearer photo.",
-        },
-        { status: res.status }
-      );
+      console.error("[process-report] backend error:", res.status, rawBody);
+
+      // 422 is the documented "no issue detected in this image" response -
+      // a real, expected outcome, not a failure. Anything else (5xx, or a
+      // non-JSON body like a bare "Internal Server Error") means the
+      // backend itself broke, which is a different problem and shouldn't
+      // be described to the user as "no issue detected".
+      const error =
+        res.status === 422
+          ? (data?.detail ?? "No civic issue could be detected in this image. Try a clearer photo.")
+          : "The detection service hit an unexpected error processing this image. Please try again in a moment.";
+
+      return NextResponse.json({ error }, { status: res.status });
     }
 
     return NextResponse.json(data);

@@ -8,6 +8,7 @@ import "leaflet/dist/leaflet.css";
 import IssuePopup from "./IssuePopup";
 import MapControls from "./MapControls";
 import MapLegend from "./MapLegend";
+import type { MapIssue } from "@/lib/data/public-map";
 
 // Fix for default leaflet icons in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -52,6 +53,7 @@ const icons = {
   Critical: createCustomIcon("#EF4444"), // Red
   High: createCustomIcon("#F97316"), // Orange
   Medium: createCustomIcon("#EAB308"), // Yellow
+  Low: createCustomIcon("#3B82F6"), // Blue
   Resolved: createCustomIcon("#22C55E"), // Green
 };
 
@@ -62,43 +64,32 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [8, 8],
 });
 
-// Generates random mock issues around a given center
-const generateMockIssues = (lat: number, lng: number) => [
-  { id: "CVL-8894", title: "Large Pothole on Main St", lat: lat + 0.002, lng: lng - 0.003, category: "Pothole", priority: "Critical", confidence: 98, severity: 85, department: "Public Works", status: "Open", timeReported: "2h ago" },
-  { id: "CVL-8895", title: "Broken Streetlight", lat: lat + 0.003, lng: lng + 0.004, category: "Streetlight", priority: "Medium", confidence: 92, severity: 45, department: "Power & Light", status: "Assigned", timeReported: "4h ago" },
-  { id: "CVL-8896", title: "Water Leak near Park", lat: lat - 0.001, lng: lng - 0.005, category: "Water Leak", priority: "High", confidence: 89, severity: 72, department: "Water Dept", status: "Open", timeReported: "1h ago" },
-  { id: "CVL-8897", title: "Cleared Fallen Tree", lat: lat + 0.005, lng: lng + 0.001, category: "Fallen Tree", priority: "Resolved", confidence: 99, severity: 10, department: "Parks & Rec", status: "Resolved", timeReported: "1d ago" },
-  { id: "CVL-8898", title: "Traffic Signal Out", lat: lat - 0.004, lng: lng + 0.005, category: "Traffic Hazard", priority: "Critical", confidence: 95, severity: 92, department: "Transportation", status: "Open", timeReported: "30m ago" },
-  { id: "CVL-8899", title: "Illegal Dumping", lat: lat - 0.002, lng: lng - 0.001, category: "Garbage", priority: "Medium", confidence: 88, severity: 35, department: "Sanitation", status: "Open", timeReported: "5h ago" },
-];
-
 const DEFAULT_CENTER: [number, number] = [10.8505, 76.2711]; // Kerala, India
 
 // Component to handle auto-fitting bounds and exposed controls
-function MapEffectController({ triggerReset, issues }: { triggerReset: number, issues: any[] }) {
+function MapEffectController({ triggerReset, issues }: { triggerReset: number, issues: MapIssue[] }) {
   const map = useMap();
-  
+
   useEffect(() => {
     if (issues.length > 0) {
       const bounds = L.latLngBounds(issues.map(issue => [issue.lat, issue.lng]));
       map.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 1 });
     }
   }, [map, triggerReset, issues]);
-  
+
   return null;
 }
 
-export default function DynamicMap({ resetKey }: { resetKey: number }) {
+export default function DynamicMap({ resetKey, issues }: { resetKey: number; issues: MapIssue[] }) {
   const [mounted, setMounted] = useState(false);
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [issues, setIssues] = useState(generateMockIssues(DEFAULT_CENTER[0], DEFAULT_CENTER[1]));
 
   useEffect(() => {
     setMounted(true);
-    // Request location on mount
     handleLocateMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLocateMe = () => {
@@ -110,8 +101,7 @@ export default function DynamicMap({ resetKey }: { resetKey: number }) {
         const newCenter: [number, number] = [latitude, longitude];
         setMapCenter(newCenter);
         setUserLocation(newCenter);
-        setIssues(generateMockIssues(latitude, longitude));
-        
+
         if (mapRef) {
           mapRef.setView(newCenter, 13, { animate: true });
         }
@@ -130,9 +120,9 @@ export default function DynamicMap({ resetKey }: { resetKey: number }) {
 
   return (
     <div className="w-full h-full relative z-0">
-      <MapContainer 
-        center={mapCenter} 
-        zoom={13} 
+      <MapContainer
+        center={mapCenter}
+        zoom={13}
         zoomControl={false} // We will build custom zoom controls
         className="w-full h-full z-0 outline-none"
         ref={setMapRef}
@@ -141,9 +131,9 @@ export default function DynamicMap({ resetKey }: { resetKey: number }) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" // CartoDB Voyager is a clean, modern light theme
         />
-        
+
         <MapEffectController triggerReset={resetKey} issues={issues} />
-        
+
         {userLocation && (
           <Marker position={userLocation} icon={userLocationIcon}>
             <Popup className="rounded-xl">
@@ -159,13 +149,13 @@ export default function DynamicMap({ resetKey }: { resetKey: number }) {
           spiderfyOnMaxZoom={true}
         >
           {issues.map((issue) => (
-            <Marker 
-              key={issue.id} 
-              position={[issue.lat, issue.lng]} 
-              icon={icons[issue.priority as keyof typeof icons]}
+            <Marker
+              key={issue.id}
+              position={[issue.lat, issue.lng]}
+              icon={icons[issue.priority]}
             >
               <Popup className="custom-popup" closeButton={false} minWidth={300} maxWidth={300} autoPanPadding={[50, 50]}>
-                <IssuePopup {...issue} priority={issue.priority as any} />
+                <IssuePopup {...issue} />
               </Popup>
             </Marker>
           ))}
@@ -174,7 +164,7 @@ export default function DynamicMap({ resetKey }: { resetKey: number }) {
         <MapControls onReset={() => mapRef?.setView(mapCenter, 13)} />
         <MapLegend />
       </MapContainer>
-      
+
       {/* Override leaflet popup default styles to match our custom component exactly */}
       <style jsx global>{`
         .leaflet-popup-content-wrapper {
