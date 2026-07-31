@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
-import { useState } from "react";
+import { useActionState, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Mail, Lock, MapPin, Phone, IdCard, Briefcase, Eye, EyeOff, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
@@ -33,7 +32,9 @@ export default function SignupForm() {
     formData.set("mobileNumber", values.mobileNumber);
     formData.set("aadhaarNumber", values.aadhaarNumber ?? "");
     formData.set("profession", values.profession);
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   if (state?.message) {

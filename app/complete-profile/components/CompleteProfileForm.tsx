@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, MapPin, Phone, IdCard, Briefcase, Loader2 } from "lucide-react";
@@ -27,7 +27,9 @@ export default function CompleteProfileForm({ defaultValues }: { defaultValues: 
     formData.set("mobileNumber", values.mobileNumber);
     formData.set("aadhaarNumber", values.aadhaarNumber ?? "");
     formData.set("profession", values.profession);
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   return (

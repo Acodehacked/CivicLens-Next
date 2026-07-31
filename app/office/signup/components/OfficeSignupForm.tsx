@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Mail, Lock, Building2, Eye, EyeOff, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
@@ -25,7 +25,9 @@ export default function OfficeSignupForm() {
     formData.set("email", values.email);
     formData.set("password", values.password);
     formData.set("department", values.department);
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   if (state?.message) {
