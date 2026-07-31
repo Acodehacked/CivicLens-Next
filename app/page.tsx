@@ -9,11 +9,33 @@ import Testimonials from "@/app/components/Testimonials";
 import FinalCTA from "@/app/components/FinalCTA";
 import Footer from "@/app/components/Footer";
 import CivicAIChatbot from "@/app/components/CivicAIChatbot";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let currentUser: { displayName: string; href: string } | null = null;
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, role")
+      .eq("id", user.id)
+      .single();
+
+    currentUser = {
+      displayName: profile?.full_name || user.email || "Account",
+      href: profile?.role === "admin" || profile?.role === "department_staff" ? "/admin" : "/report",
+    };
+  }
 
 export default function Home() {
   return (
     <>
-      <Navbar />
+      <Navbar currentUser={currentUser} />
       <main className="w-full flex flex-col bg-background">
         <Hero />
         <Features />

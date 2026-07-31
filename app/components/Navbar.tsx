@@ -16,10 +16,19 @@ const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-export default function Navbar() {
+type CurrentUser = { displayName: string; href: string } | null;
+
+export default function Navbar({ currentUser = null }: { currentUser?: CurrentUser }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathname = usePathname();
+  const initials = currentUser
+    ? currentUser.displayName
+        .split(" ")
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : null;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -69,24 +78,26 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* CTA Group + Mobile Toggle */}
-        <div className="flex items-center gap-3">
-          {/* Report Issue — Blue filled */}
-          <Link
-            href="/report"
-            className="hidden sm:inline-flex items-center gap-1.5 bg-[#2563EB] text-white px-4 py-2 rounded-full text-sm font-semibold tracking-wide hover:bg-[#1d4ed8] active:scale-[0.97] transition-all duration-200 shadow-sm hover:shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            Report Issue
-          </Link>
-          {/* Log In — Blue outline */}
-          <Link
-            href="/login"
-            className="hidden sm:inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 text-slate-600 hover:border-[#2563EB] hover:text-[#2563EB] active:scale-[0.97] transition-all duration-[220ms]"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            Log In
-          </Link>
+        {/* CTA + Mobile Toggle */}
+        <div className="flex items-center gap-4">
+          {currentUser ? (
+            <Link
+              href={currentUser.href}
+              className="hidden sm:inline-flex items-center gap-2 bg-white border border-border px-2 py-1.5 pr-4 rounded-full text-sm font-medium tracking-wide text-primary hover:bg-surface-muted active:scale-[0.98] transition-all duration-200 shadow-sm"
+            >
+              <span className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0">
+                {initials}
+              </span>
+              {currentUser.displayName}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex bg-primary text-white px-5 py-2 rounded-full text-sm font-medium tracking-wide hover:bg-primary-hover active:scale-[0.98] transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              Portal Login
+            </Link>
+          )}
 
           {/* Mobile menu button */}
           <button
@@ -111,39 +122,45 @@ export default function Navbar() {
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="md:hidden overflow-hidden bg-white/95 backdrop-blur-2xl border-b border-border/50"
           >
-            <nav className="flex flex-col py-4 px-6 gap-2" aria-label="Mobile navigation">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "py-3 px-4 rounded-2xl text-sm font-medium transition-colors duration-[220ms]",
-                      isActive
-                        ? "text-[#2563EB] bg-[#EFF6FF] font-semibold"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })}
-              <Link
-                href="/report"
-                className="mt-2 bg-[#2563EB] text-white py-3 px-4 rounded-2xl text-sm font-semibold text-center hover:bg-[#1d4ed8] transition-colors duration-[220ms] shadow-sm"
-                onClick={() => setMobileOpen(false)}
-              >
-                Report Issue
-              </Link>
-              <Link
-                href="/login"
-                className="border border-slate-200 text-slate-600 py-3 px-4 rounded-2xl text-sm font-medium text-center hover:border-[#2563EB] hover:text-[#2563EB] transition-all duration-[220ms]"
-                onClick={() => setMobileOpen(false)}
-              >
-                Log In
-              </Link>
+            <nav
+              className="flex flex-col py-4 px-6 gap-2"
+              aria-label="Mobile navigation"
+            >
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "py-3 px-4 rounded-xl text-sm font-medium transition-colors",
+                    link.active
+                      ? "text-primary bg-surface-muted font-bold"
+                      : "text-on-surface-muted hover:text-primary hover:bg-surface-muted"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {currentUser ? (
+                <Link
+                  href={currentUser.href}
+                  className="mt-4 flex items-center justify-center gap-2 bg-primary text-white py-3 px-4 rounded-xl text-sm font-medium text-center hover:bg-primary-hover transition-colors sm:hidden shadow-sm"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs shrink-0">
+                    {initials}
+                  </span>
+                  {currentUser.displayName}
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="mt-4 bg-primary text-white py-3 px-4 rounded-xl text-sm font-medium text-center hover:bg-primary-hover transition-colors sm:hidden shadow-sm"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Portal Login
+                </Link>
+              )}
             </nav>
           </motion.div>
         )}
