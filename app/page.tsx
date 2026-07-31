@@ -10,6 +10,7 @@ import FinalCTA from "@/app/components/FinalCTA";
 import Footer from "@/app/components/Footer";
 import CivicAIChatbot from "@/app/components/CivicAIChatbot";
 
+export default function Home() {
   return (
     <>
       <Navbar />
