@@ -1,6 +1,5 @@
 import Navbar from "@/app/components/Navbar";
 import Hero from "@/app/components/Hero";
-import TrustedBy from "@/app/components/TrustedBy";
 import Features from "@/app/components/Features";
 import HowItWorks from "@/app/components/HowItWorks";
 import AICapabilities from "@/app/components/AICapabilities";
@@ -9,6 +8,7 @@ import Benefits from "@/app/components/Benefits";
 import Testimonials from "@/app/components/Testimonials";
 import FinalCTA from "@/app/components/FinalCTA";
 import Footer from "@/app/components/Footer";
+import CivicAIChatbot from "@/app/components/CivicAIChatbot";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -32,12 +32,12 @@ export default async function Home() {
     };
   }
 
+export default function Home() {
   return (
     <>
       <Navbar currentUser={currentUser} />
       <main className="w-full flex flex-col bg-background">
         <Hero />
-        <TrustedBy />
         <Features />
         <HowItWorks />
         <AICapabilities />
@@ -47,6 +47,7 @@ export default async function Home() {
         <FinalCTA />
       </main>
       <Footer />
+      <CivicAIChatbot />
     </>
   );
 }

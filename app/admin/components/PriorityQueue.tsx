@@ -3,32 +3,33 @@
 import { AlertTriangle, Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const queue = [
   {
     id: "REP-105",
-    category: "Fallen Tree on Main Rd",
+    category: "Fallen Tree",
     severity: "Critical",
     score: 98,
-    dept: "Parks",
+    dept: "Parks & Tree Maintenance Department",
     time: "45m ago",
     img: "https://images.unsplash.com/photo-1594950893301-44755f190e22?auto=format&fit=crop&w=150&q=80"
   },
   {
     id: "REP-108",
-    category: "Traffic Signal Down",
+    category: "Flood",
     severity: "Critical",
     score: 95,
-    dept: "Traffic",
+    dept: "Disaster Management & Emergency Response Department",
     time: "1h ago",
-    img: "https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&w=150&q=80"
+    img: "https://images.unsplash.com/photo-1541888047913-91ee71212c41?auto=format&fit=crop&w=150&q=80"
   },
   {
     id: "REP-104",
-    category: "Large Pothole (Multi-car damage)",
+    category: "Pothole",
     severity: "High",
     score: 88,
-    dept: "Public Works",
+    dept: "Road Maintenance Department",
     time: "10m ago",
     img: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=150&q=80"
   }
@@ -42,7 +43,7 @@ export default function PriorityQueue() {
           <AlertTriangle size={18} className="text-red-500" />
           <div>
             <h3 className="font-bold text-primary">Priority Queue</h3>
-            <p className="text-[11px] font-semibold text-slate-400">Requires immediate attention</p>
+            <p className="text-[11px] font-semibold text-slate-400">Requires immediate department attention</p>
           </div>
         </div>
         <div className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">
@@ -68,7 +69,9 @@ export default function PriorityQueue() {
                   <div className="text-sm font-bold text-primary truncate pr-2">{item.category}</div>
                   <div className="text-xs font-black text-red-600 shrink-0">{item.score}</div>
                 </div>
-                <div className="text-[10px] text-slate-400 mb-2">{item.id} • {item.dept}</div>
+                <div className="text-[10px] text-[#2563EB] font-semibold mb-2 truncate" title={item.dept}>
+                  {item.id} • {item.dept}
+                </div>
                 <div className="flex items-center justify-between">
                   <div className={cn(
                     "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
@@ -85,21 +88,21 @@ export default function PriorityQueue() {
             
             {/* Hidden Action - visible on hover */}
             <div className="absolute inset-0 bg-white/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-              <button className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-primary-hover active:scale-95 transition-all">
-                Assign
-              </button>
-              <button className="px-3 py-1.5 bg-white text-primary border border-border rounded-lg text-xs font-semibold shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
+              <Link href="/admin/priority-queue" className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-primary-hover active:scale-95 transition-all">
+                Dispatch
+              </Link>
+              <Link href="/admin/priority-queue" className="px-3 py-1.5 bg-white text-primary border border-border rounded-lg text-xs font-semibold shadow-sm hover:bg-slate-50 active:scale-95 transition-all">
                 View
-              </button>
+              </Link>
             </div>
           </motion.div>
         ))}
       </div>
       
       <div className="p-3 border-t border-border bg-slate-50/50 flex justify-center mt-auto">
-        <button className="text-xs font-bold text-slate-500 hover:text-primary transition-colors flex items-center gap-1">
-          Open Queue <ArrowRight size={14} />
-        </button>
+        <Link href="/admin/priority-queue" className="text-xs font-bold text-slate-500 hover:text-[#2563EB] transition-colors flex items-center gap-1">
+          Open Priority Queue <ArrowRight size={14} />
+        </Link>
       </div>
     </div>
   );

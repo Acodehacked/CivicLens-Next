@@ -35,7 +35,7 @@ export default function Testimonials() {
         
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-3xl md:text-5xl font-bold text-primary tracking-tight mb-6">
-            Loved by city leaders
+            Loved by community leaders
           </h2>
           <p className="text-lg text-on-surface-muted">
             See how forward-thinking municipalities are transforming their operations with CivicLens.
@@ -52,14 +52,14 @@ export default function Testimonials() {
               className="bg-white p-8 rounded-3xl border border-border/50 shadow-sm flex flex-col justify-between"
             >
               <div>
-                <Quote className="w-8 h-8 text-accent/20 mb-6" />
+                <Quote className="w-8 h-8 text-[#2563EB]/20 mb-6" />
                 <p className="text-lg text-primary font-medium leading-relaxed mb-8">
                   "{t.quote}"
                 </p>
               </div>
               
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-border-light flex items-center justify-center text-on-surface-muted font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#2563EB] font-bold text-lg">
                   {t.author.charAt(0)}
                 </div>
                 <div>

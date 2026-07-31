@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Camera, Image as ImageIcon, UploadCloud, RotateCcw, X, AlertTriangle, Check, ZapIcon } from "lucide-react";
+import { Camera, Image as ImageIcon, UploadCloud, RotateCcw, X, AlertTriangle, Check, ZapIcon, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 import { format } from "date-fns";
@@ -9,6 +9,7 @@ import { format } from "date-fns";
 export default function CameraUploadCard({ onUploadComplete }: { onUploadComplete: (hasImage: boolean) => void }) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<{ size: string; res: string; time: string } | null>(null);
@@ -20,9 +21,7 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Attach stream to video element whenever the stream state updates.
-  // This is necessary because AnimatePresence renders the <video> *after*
-  // the stream is stored in state, so a setTimeout is unreliable.
+  // Attach stream to video element whenever stream state updates
   useEffect(() => {
     if (stream && videoRef.current) {
       videoRef.current.srcObject = stream;
@@ -30,17 +29,17 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
         console.warn("video.play() failed:", err);
       });
     }
-  }, [stream, isCameraOpen]); // re-run when isCameraOpen flips true (video node mounts)
+  }, [stream, isCameraOpen]);
 
-  // On desktop the webcam has no 'environment' facing mode — trying it causes
-  // OverconstrainedError. We use a graceful fallback chain:
-  // 1. Rear camera (mobile), 2. Any camera (laptop / tablet)
+  // Start camera with preferred facingMode
   const startCamera = async () => {
     setCameraError(null);
     const tryConstraints = [
-      { video: { facingMode: { exact: "environment" } } }, // rear camera on phones
-      { video: { facingMode: "user" } },                  // front camera
-      { video: true },                                     // any camera (laptops)
+      { video: { facingMode: { exact: facingMode } } },
+      { video: { facingMode: facingMode } },
+      { video: { facingMode: { exact: "environment" } } },
+      { video: { facingMode: "user" } },
+      { video: true },
     ];
 
     let mediaStream: MediaStream | null = null;
@@ -49,17 +48,47 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
         mediaStream = await navigator.mediaDevices.getUserMedia(constraint);
         break;
       } catch {
-        // try next constraint
+        // try next constraint fallback
       }
     }
 
     if (mediaStream) {
-      setIsCameraOpen(true); // render the <video> element first
-      setStream(mediaStream); // then useEffect above will attach the stream
+      setIsCameraOpen(true);
+      setStream(mediaStream);
     } else {
       setCameraError(
         "Camera access was denied or no camera was found. Please allow permissions in your browser settings, or use the file upload option below."
       );
+    }
+  };
+
+  // Flip / Switch Camera Angle (Rear <-> Front)
+  const switchCamera = async () => {
+    const targetMode = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(targetMode);
+
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    const tryConstraints = [
+      { video: { facingMode: { exact: targetMode } } },
+      { video: { facingMode: targetMode } },
+      { video: true },
+    ];
+
+    let mediaStream: MediaStream | null = null;
+    for (const constraint of tryConstraints) {
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraint);
+        break;
+      } catch {
+        // try fallback constraint
+      }
+    }
+
+    if (mediaStream) {
+      setStream(mediaStream);
     }
   };
 
@@ -91,12 +120,17 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
     setIsFlashing(true);
     setTimeout(() => setIsFlashing(false), 300);
 
-    // Flip canvas horizontally to correct front-camera mirror effect
-    ctx.save();
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    ctx.restore();
+    // Mirror canvas ONLY for front camera (facingMode === "user")
+    if (facingMode === "user") {
+      ctx.save();
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    } else {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
+
     const imageUrl = canvas.toDataURL("image/jpeg", 0.92);
     const bytes = Math.round((imageUrl.length * 3) / 4);
 
@@ -114,7 +148,6 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
     const file = e.target.files?.[0];
     if (!file) return;
     processFile(file);
-    // Reset input so same file can be re-selected
     e.target.value = "";
   };
 
@@ -194,7 +227,7 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className={cn(
-              "relative flex flex-col items-center justify-center text-center p-10 min-h-[340px] border-2 border-dashed rounded-2xl transition-all duration-200 cursor-pointer select-none",
+              "relative flex flex-col items-center justify-center text-center p-6 sm:p-10 min-h-[320px] sm:min-h-[340px] border-2 border-dashed rounded-2xl transition-all duration-200 cursor-pointer select-none",
               isDragging
                 ? "border-accent bg-blue-50/60 scale-[1.01]"
                 : "border-border bg-slate-50/50 hover:border-slate-300 hover:bg-white"
@@ -206,16 +239,16 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
           >
             {/* Icon */}
             <div className={cn(
-              "w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-sm border transition-colors",
+              "w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-4 sm:mb-5 shadow-sm border transition-colors",
               isDragging ? "bg-accent text-white border-accent" : "bg-white text-accent border-border"
             )}>
-              <Camera size={30} strokeWidth={1.5} />
+              <Camera size={28} strokeWidth={1.5} />
             </div>
 
             <h3 className="text-base font-bold text-primary mb-1.5">
               {isDragging ? "Drop your image here" : "Capture or Upload Evidence"}
             </h3>
-            <p className="text-sm text-on-surface-muted mb-7 max-w-xs leading-relaxed">
+            <p className="text-xs sm:text-sm text-on-surface-muted mb-6 sm:mb-7 max-w-xs leading-relaxed">
               Take a photo with your camera or drag & drop an image file. A clear, well-lit photo helps the AI classify the issue accurately.
             </p>
 
@@ -223,7 +256,7 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-3 max-w-sm text-left w-full"
+                className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 flex items-start gap-3 max-w-sm text-left w-full"
               >
                 <AlertTriangle className="shrink-0 mt-0.5" size={16} />
                 <span>{cameraError}</span>
@@ -234,21 +267,21 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={startCamera}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-blue-700 active:scale-[0.97] transition-all"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#2563EB] text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-[#1D4ED8] active:scale-[0.97] transition-all"
               >
                 <Camera size={17} />
                 Open Camera
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-white text-primary border border-border rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 active:scale-[0.97] transition-all"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary border border-border rounded-xl text-sm font-semibold shadow-sm hover:bg-slate-50 active:scale-[0.97] transition-all"
               >
                 <UploadCloud size={17} />
                 Browse Files
               </button>
             </div>
 
-            <p className="mt-6 text-xs text-on-surface-muted/60 font-medium">
+            <p className="mt-5 sm:mt-6 text-[10px] sm:text-xs text-on-surface-muted/60 font-medium">
               Drag & drop · Paste (Ctrl+V) · JPG, PNG, WEBP up to 25 MB
             </p>
           </motion.div>
@@ -279,7 +312,6 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
 
             <video
               ref={(node) => {
-                // Assign ref AND immediately attach stream when node is created
                 (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = node;
                 if (node && stream) {
                   node.srcObject = stream;
@@ -290,13 +322,15 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
               playsInline
               muted
               className="w-full h-full object-cover"
-              style={{ minHeight: 320, transform: "scaleX(-1)" }}
+              style={{
+                minHeight: 340,
+                transform: facingMode === "user" ? "scaleX(-1)" : "none",
+              }}
             />
 
             {/* Framing guide */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="relative w-56 h-56">
-                {/* Corner marks */}
+              <div className="relative w-48 sm:w-56 h-48 sm:h-56">
                 {["tl","tr","bl","br"].map((corner) => (
                   <div
                     key={corner}
@@ -312,105 +346,103 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
               </div>
             </div>
 
-            {/* Camera label */}
-            <div className="absolute top-4 left-4 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-white text-xs font-bold bg-black/40 backdrop-blur-md px-2 py-1 rounded-md">
-                LIVE
+            {/* Camera badge & Facing Mode indicator */}
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-white text-xs font-bold bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md">
+                  LIVE CAMERA
+                </span>
+              </div>
+              <span className="text-white/80 text-[10px] font-bold bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md uppercase tracking-wider">
+                {facingMode === "environment" ? "Rear Camera" : "Front Camera"}
               </span>
             </div>
 
             {/* Controls */}
-            <div className="absolute bottom-0 left-0 right-0 pb-6 pt-16 flex items-end justify-center gap-8 bg-gradient-to-t from-black/70 to-transparent">
+            <div className="absolute bottom-0 left-0 right-0 pb-6 pt-16 flex items-center justify-center gap-4 sm:gap-8 bg-gradient-to-t from-black/80 to-transparent px-4">
               {/* Close */}
               <button
                 onClick={stopCamera}
-                className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md text-white border border-white/20 flex items-center justify-center hover:bg-white/25 active:scale-95 transition-all"
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 backdrop-blur-md text-white border border-white/20 flex items-center justify-center hover:bg-white/25 active:scale-95 transition-all shrink-0"
                 title="Cancel"
               >
                 <X size={20} />
               </button>
 
-              {/* Capture shutter */}
+              {/* Capture shutter button */}
               <button
                 onClick={capturePhoto}
-                className="w-20 h-20 rounded-full bg-white/15 backdrop-blur-md border-[5px] border-white flex items-center justify-center hover:bg-white/25 hover:scale-105 active:scale-95 transition-all shadow-xl"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/15 backdrop-blur-md border-[4px] sm:border-[5px] border-white flex items-center justify-center hover:bg-white/25 hover:scale-105 active:scale-95 transition-all shadow-xl shrink-0"
                 title="Take Photo"
               >
-                <div className="w-14 h-14 rounded-full bg-white" />
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white" />
               </button>
 
-              {/* Upload instead */}
+              {/* Flip Camera Angle button */}
               <button
-                onClick={() => { stopCamera(); fileInputRef.current?.click(); }}
-                className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md text-white border border-white/20 flex items-center justify-center hover:bg-white/25 active:scale-95 transition-all"
-                title="Upload File"
+                onClick={switchCamera}
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/15 backdrop-blur-md text-white border border-white/20 flex items-center justify-center hover:bg-white/25 active:scale-95 transition-all shrink-0"
+                title="Flip Camera Angle (Front/Rear)"
               >
-                <ImageIcon size={20} />
+                <RefreshCw size={20} />
               </button>
             </div>
           </motion.div>
         )}
 
-        {/* ── PREVIEW STATE ── */}
+        {/* ── CAPTURED IMAGE STATE ── */}
         {capturedImage && (
           <motion.div
-            key="preview"
+            key="captured"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-2xl overflow-hidden"
+            exit={{ opacity: 0 }}
+            className="p-4 sm:p-5 flex flex-col gap-4"
           >
-            {/* Image */}
-            <div className="relative group">
+            <div className="relative w-full h-64 sm:h-80 rounded-xl overflow-hidden bg-black/5 group">
               <img
                 src={capturedImage}
                 alt="Captured Evidence"
-                className="w-full object-cover max-h-[380px]"
+                className="w-full h-full object-cover"
               />
-
-              {/* Overlay on hover */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-5">
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={startCamera}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/60 transition-colors"
-                  >
-                    <RotateCcw size={14} /> Retake
-                  </button>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/60 transition-colors"
-                  >
-                    <UploadCloud size={14} /> Replace
-                  </button>
-                  <button
-                    onClick={resetImage}
-                    className="p-1.5 rounded-lg bg-red-500/70 backdrop-blur-md text-white hover:bg-red-500 transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+              <button
+                onClick={resetImage}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center opacity-90 hover:opacity-100 hover:scale-105 active:scale-95 transition-all"
+                title="Remove Image"
+              >
+                <X size={16} />
+              </button>
+              <div className="absolute bottom-3 left-3 bg-green-500 text-white text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
+                <Check size={14} /> Photo Attached
               </div>
             </div>
 
-            {/* Metadata bar */}
-            <div className="bg-white px-5 py-3 border-t border-border flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-sm font-bold text-primary">Image Ready for Analysis</span>
-              </div>
-              {metadata && (
-                <div className="flex items-center gap-3 text-xs font-medium text-on-surface-muted">
-                  <span>{metadata.res}</span>
-                  <span className="w-1 h-1 rounded-full bg-border" />
-                  <span>{metadata.size}</span>
-                  <span className="w-1 h-1 rounded-full bg-border" />
-                  <span>{metadata.time}</span>
-                  <button onClick={resetImage} className="ml-2 text-red-400 hover:text-red-600 transition-colors font-semibold">
-                    Remove
-                  </button>
+            {/* Metadata Bar */}
+            {metadata && (
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl text-xs text-on-surface-muted font-medium border border-border">
+                <div className="flex items-center gap-3">
+                  <span>Size: <strong className="text-primary">{metadata.size}</strong></span>
+                  <span>Res: <strong className="text-primary">{metadata.res}</strong></span>
                 </div>
-              )}
+                <span>Captured: <strong className="text-primary">{metadata.time}</strong></span>
+              </div>
+            )}
+
+            {/* Retake / Replace Actions */}
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={startCamera}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-100 text-primary rounded-xl text-xs sm:text-sm font-semibold hover:bg-slate-200 active:scale-[0.98] transition-all"
+              >
+                <RotateCcw size={15} /> Retake Photo
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-100 text-primary rounded-xl text-xs sm:text-sm font-semibold hover:bg-slate-200 active:scale-[0.98] transition-all"
+              >
+                <UploadCloud size={15} /> Change File
+              </button>
             </div>
           </motion.div>
         )}

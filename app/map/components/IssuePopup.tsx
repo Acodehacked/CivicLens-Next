@@ -1,8 +1,8 @@
 "use client";
 
-import { AlertTriangle, Clock, CalendarDays, CheckCircle, ChevronRight, Eye } from "lucide-react";
+import { AlertTriangle, Clock, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import Image from "next/image";
+import Link from "next/link";
 
 interface IssuePopupProps {
   id: string;
@@ -21,7 +21,7 @@ const priorityConfig = {
   Critical: { color: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
   High: { color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200" },
   Medium: { color: "text-yellow-600", bg: "bg-yellow-50", border: "border-yellow-200" },
-  Resolved: { color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
+  Resolved: { color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
 };
 
 export default function IssuePopup({ 
@@ -38,7 +38,6 @@ export default function IssuePopup({
           <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
         ) : (
           <div className="flex flex-col items-center justify-center text-slate-400">
-            <Eye size={24} className="mb-2 opacity-50" />
             <span className="text-[10px] uppercase tracking-wider font-bold">No Image Provided</span>
           </div>
         )}
@@ -79,18 +78,27 @@ export default function IssuePopup({
           </div>
           <div className="flex items-center justify-between text-xs text-slate-600">
              <div className="flex items-center gap-2">
-               <Clock size={14} className="text-slate-400" />
-               <span>{status}</span>
+                <Clock size={14} className="text-slate-400" />
+                <span>{status}</span>
              </div>
              <span className="text-[10px] font-medium">{timeReported}</span>
           </div>
         </div>
 
-        {/* Action Button */}
-        <button className="w-full mt-2 py-2 bg-blue-600 text-white rounded-md text-xs font-bold shadow-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-1">
-          View Details
-          <ChevronRight size={14} />
-        </button>
+        {/* Action Buttons: Connect to Report Page */}
+        <div className="flex gap-2 mt-2">
+          <button className="flex-1 py-2 bg-slate-100 text-slate-700 rounded-md text-xs font-bold hover:bg-slate-200 transition-colors flex items-center justify-center gap-1">
+            Details
+            <ChevronRight size={14} />
+          </button>
+          <Link
+            href="/report"
+            className="flex-1 py-2 bg-[#2563EB] text-white rounded-md text-xs font-bold hover:bg-[#1D4ED8] transition-colors flex items-center justify-center gap-1 text-center"
+          >
+            <Plus size={14} />
+            Report Issue
+          </Link>
+        </div>
       </div>
     </div>
   );

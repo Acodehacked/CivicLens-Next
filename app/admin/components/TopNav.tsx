@@ -10,17 +10,17 @@ import { cn } from "@/lib/utils/cn";
 import { LogoutButton } from "@/components/logout-button";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
-  { icon: Map, label: "Community Map", href: "#" },
-  { icon: ListTodo, label: "Priority Queue", href: "#", badge: 3 },
-  { icon: BarChart3, label: "Analytics", href: "#" },
-  { icon: Building2, label: "Departments", href: "#" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
+  { icon: ListTodo, label: "Priority Queue", href: "/admin/priority-queue", badge: 3 },
+  { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
+  { icon: Building2, label: "Departments", href: "/admin/departments" },
 ];
 
 const secondaryNavItems = [
-  { icon: Eye, label: "Citizen View", href: "/" },
-  { icon: History, label: "History", href: "#" },
-  { icon: Settings, label: "Settings", href: "#" },
+  { icon: History, label: "History Log", href: "/admin/history" },
+  { icon: Bell, label: "Notifications", href: "/admin/notifications" },
+  { icon: Settings, label: "Settings", href: "/admin/settings" },
+  { icon: HelpCircle, label: "Help & Support", href: "/admin/help" },
 ];
 
 export default function TopNav({
@@ -62,11 +62,11 @@ export default function TopNav({
           >
             <Menu size={20} />
           </button>
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/admin/dashboard" className="flex items-center gap-2">
             <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shrink-0">
               <Eye size={14} className="text-white" />
             </div>
-            <span className="font-bold text-primary tracking-tight">CivicLens</span>
+            <span className="font-bold text-primary tracking-tight">CivicLens Admin</span>
           </Link>
         </div>
 
@@ -115,7 +115,11 @@ export default function TopNav({
           <div className="w-px h-6 bg-slate-200 hidden sm:block mx-1" />
 
           {/* Notifications */}
-          <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-primary transition-colors">
+          <Link 
+            href="/admin/notifications" 
+            title="Notifications" 
+            className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-primary transition-colors"
+          >
             <Bell size={18} />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
@@ -159,7 +163,7 @@ export default function TopNav({
             >
               <div className="h-16 flex items-center justify-between px-4 border-b border-border/50 shrink-0">
                 <Link 
-                  href="/" 
+                  href="/admin/dashboard" 
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 >
