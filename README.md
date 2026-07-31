@@ -1,87 +1,360 @@
-# badjelly-fish
+# CivicLens
 
-Next.js (App Router) with [Hono](https://hono.dev) as the API layer, [Drizzle ORM](https://orm.drizzle.team) over Supabase Postgres, and Supabase Auth + Storage.
+<p align="center">
+  <h3 align="center">Turning Civic Problems into Action with AI</h3>
+  <p align="center">
+    An AI-powered smart civic issue reporting and prioritization platform that helps citizens report infrastructure defects while enabling authorities to detect, prioritize, and resolve them efficiently.
+  </p>
+</p>
 
-## Stack
+---
 
-- **Next.js 16** - frontend, Server Components, and the host for the API
-- **Hono** - mounted as the API layer at `/api/*` via `app/api/[[...route]]/route.ts`
-- **Drizzle ORM** - typed queries against Supabase's Postgres database (`db/schema.ts`)
-- **Supabase** - Postgres, Auth (magic link), and Storage
+## 📖 Overview
 
-## Project layout
+CivicLens is an AI-powered civic issue management platform designed to modernize how infrastructure problems such as potholes, flooding, fallen trees, and garbage accumulation are reported and resolved.
 
+Instead of requiring citizens to identify the correct government department, CivicLens automatically detects the issue using Artificial Intelligence, evaluates its severity, identifies duplicate reports, assigns a priority level, and routes it to the appropriate authority.
+
+The platform combines computer vision, semantic image similarity, intelligent prioritization, and an interactive dashboard to create a transparent bridge between citizens and government agencies.
+
+---
+
+# 🚨 Problem Statement
+
+Current civic complaint systems suffer from several challenges:
+
+- Lengthy and confusing complaint procedures
+- Citizens often don't know the correct department to contact
+- Duplicate reports waste administrative resources
+- No intelligent prioritization of complaints
+- Limited transparency after a complaint is submitted
+- Delayed response to critical public safety issues
+
+These challenges often result in delayed repairs, inefficient resource allocation, and reduced public trust.
+
+---
+
+# 💡 Our Solution
+
+CivicLens simplifies civic issue reporting by allowing users to submit a photo of an issue.
+
+The platform automatically:
+
+- Detects the civic issue using AI
+- Identifies duplicate complaints
+- Assesses severity
+- Calculates complaint priority
+- Routes the issue to the correct department
+- Enables authorities to monitor and update complaint status
+
+---
+
+# ✨ Features
+
+## Citizen Features
+
+- AI-powered issue detection
+- Simple photo-based reporting
+- Automatic GPS location capture
+- Community issue map
+- Complaint status tracking
+- AI-powered chatbot assistant
+
+## Authority Features
+
+- Department dashboard
+- Priority-based complaint queue
+- Duplicate complaint merging
+- Complaint verification
+- Complaint lifecycle management
+- Analytics dashboard
+
+---
+
+# 🛣️ Supported Civic Issues
+
+- 🛣️ Potholes
+- 🌊 Flooding
+- 🌳 Fallen Trees
+- 🗑️ Garbage Accumulation
+
+---
+
+# 🧠 AI Pipeline
+
+```text
+Citizen Uploads Image
+        │
+        ▼
+YOLO11n Detection
+        │
+        ▼
+Highest Confidence Detection
+        │
+        ▼
+Generate CLIP Embedding
+        │
+        ▼
+Duplicate Detection
+        │
+   ┌───────────────┐
+   │ Duplicate?    │
+   └──────┬────────┘
+          │
+     Yes  │  No
+          ▼
+Increase Report Count
+Recalculate Priority
+          │
+          ▼
+ Gemini Severity Analysis
+          │
+          ▼
+ Department Routing
+          │
+          ▼
+ Save to Supabase
 ```
-app/
-  api/[[...route]]/route.ts  Hono app mounted here (hono/vercel adapter)
-  auth/callback/route.ts     Exchanges the magic-link code for a session
-  login/page.tsx             Magic-link sign-in form
-  page.tsx                   Demo page: auth state, posts, avatar upload
-components/                  Client components used by app/page.tsx
-db/
-  schema.ts                  Drizzle table definitions
-  client.ts                  Drizzle client (postgres.js)
-  setup.sql                  RLS policies, profile-sync trigger, storage bucket
-lib/
-  api/app.ts                 Hono app + routes
-  api/auth.ts                Hono middleware verifying the Supabase session
-  supabase/client.ts          Browser Supabase client
-  supabase/server.ts          Server Component / Route Handler Supabase client
-  supabase/middleware.ts      Session refresh used by proxy.ts
-  supabase/storage.ts         Storage (avatars bucket) helpers
-proxy.ts                      Next.js 16's replacement for middleware.ts
-drizzle.config.ts
+
+---
+
+# ⚙️ System Architecture
+
+```text
+                Next.js Frontend
+                       │
+                       ▼
+                 FastAPI Backend
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+     YOLO11n        CLIP         Gemini
+   Detection     Embeddings     Severity
+        │              │              │
+        └──────────────┼──────────────┘
+                       │
+                  Supabase
+                       │
+              Admin Dashboard
 ```
 
-> **Note on `proxy.ts`**: Next.js 16 renamed the `middleware.ts` convention to
-> `proxy.ts` (`export default function proxy(...)` instead of `export function
-> middleware(...)`). This project already uses the new convention.
+---
 
-## Setup
+# 🛠️ Technology Stack
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. Copy `.env.example` to `.env` and fill in:
-   - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY` — Project Settings → API
-   - `DATABASE_URL` — Project Settings → Database → Connection string (URI). Use the direct connection (port 5432) for local dev/migrations.
-3. Install dependencies and push the schema:
-   ```bash
-   bun install
-   bun run db:push
-   ```
-4. Open the Supabase SQL editor and run `db/setup.sql` — it wires up:
-   - a trigger that creates a `profiles` row for every new `auth.users` row
-   - Row Level Security policies for `profiles` and `posts`
-   - the `avatars` Storage bucket and its access policies
-5. In Supabase Auth settings, enable the **Email** provider (magic link) and add `http://localhost:3000/auth/callback` to the redirect URL allow list.
-6. Run the app:
-   ```bash
-   bun dev
-   ```
-   Visit `http://localhost:3000`, sign in via magic link, publish a post, and upload an avatar.
+## Frontend
 
-## Database workflow
+- Next.js
+- TypeScript
+- Tailwind CSS
 
-- `bun run db:generate` — generate SQL migration files from schema changes
-- `bun run db:migrate` — apply generated migrations
-- `bun run db:push` — push the schema directly (fast iteration, no migration files)
-- `bun run db:studio` — open Drizzle Studio against your database
+## Backend
 
-## API
+- FastAPI
+- Python
 
-The Hono app lives in `lib/api/app.ts` and is mounted at `/api`:
+## AI / Machine Learning
 
-- `GET /api/health` — liveness check
-- `GET /api/posts` — list posts
-- `POST /api/posts` — create a post (requires an authenticated session)
-- `DELETE /api/posts/:id` — delete your own post (requires an authenticated session)
+- YOLO11n Segmentation
+- CLIP Embeddings
+- Gemini
+- Groq (AI Chatbot)
 
-Auth is enforced with `requireUser` (`lib/api/auth.ts`), which reads the Supabase
-session from cookies via the same request-scoped `next/headers` context the
-Next.js route handler runs in — no separate JWT plumbing needed.
+## Database & Storage
 
-## Adding a new API route
+- Supabase PostgreSQL
+- Supabase Storage
+- Supabase Authentication
 
-Add a route to `lib/api/app.ts` (optionally behind `requireUser`), and query
-`db` from `db/client.ts` using the tables in `db/schema.ts`. No changes to
-`app/api/[[...route]]/route.ts` are needed - it forwards every method to the
-Hono app.
+## Maps
+
+- OpenStreetMap
+
+## Deployment
+
+- Vercel
+- Cloudflare Tunnel
+
+---
+
+# 🔍 AI Model
+
+### Object Detection
+
+- Model: YOLO11n Segmentation
+- Training Platform: Google Colab
+- GPU: NVIDIA T4
+- Epochs: 50
+- Image Size: 640 × 640
+
+### Dataset
+
+- Combined multiple Roboflow Universe datasets
+- Total Images: ~18,214
+- Categories:
+  - Potholes
+  - Flooding
+  - Fallen Trees
+  - Garbage
+
+---
+
+# 📊 Model Performance
+
+| Metric | Value |
+|---------|------:|
+| mAP@50 | 0.609 |
+| mAP@50-95 | 0.529 |
+
+---
+
+# 🔁 Duplicate Detection
+
+To reduce redundant complaints, CivicLens generates CLIP embeddings for every submitted image.
+
+The system compares:
+
+- Visual similarity
+- Geographic proximity
+
+If a matching complaint is found:
+
+- Report count is incremented
+- Priority score is updated
+- No duplicate complaint is created
+
+---
+
+# 🚦 Complaint Workflow
+
+```text
+Submitted
+      │
+      ▼
+Verified
+      │
+      ▼
+Assigned
+      │
+      ▼
+Resolved
+```
+
+---
+
+# 🌐 API Endpoints
+
+## Health
+
+- GET `/health`
+- GET `/ready`
+
+## Inference
+
+- POST `/infer`
+
+## Reports
+
+- POST `/process-report`
+- POST `/similar-reports`
+- GET `/complaints`
+
+---
+
+# 📈 Dashboard
+
+Authorities can:
+
+- View all complaints
+- View complaint locations
+- Track complaint status
+- Prioritize complaints
+- Monitor department-wise reports
+- View complaint images
+
+---
+
+# 🚀 Deployment
+
+| Component | Platform |
+|-----------|----------|
+| Frontend | Vercel |
+| Backend | FastAPI |
+| Database | Supabase |
+| Storage | Supabase Storage |
+| API Tunnel | Cloudflare Tunnel |
+
+---
+
+# 📌 Future Scope
+
+- Government API Integration
+- Mobile Application
+- WhatsApp Reporting
+- Voice-based Reporting
+- Push Notifications
+- Multilingual Support
+- CCTV Integration
+- Drone-based Monitoring
+- Predictive Maintenance
+- Smart City Integration
+
+---
+
+# ⚠️ Current Limitations
+
+- Supports only four civic issue categories
+- Government API integration is planned
+- Priority scoring can be further enhanced using richer contextual information
+
+---
+
+# 👥 Team
+
+### Abin Antony
+**AI/ML Integration, Backend Architecture & Deployment**
+
+- AI pipeline
+- FastAPI backend
+- CLIP embedding integration
+- Deployment
+- Supabase integration
+
+---
+
+### Augusto Patrick
+**Model Training & Documentation**
+
+- Dataset preparation
+- YOLO11n training
+- Model optimization
+- Technical documentation
+- AI/ML workflow documentation
+
+---
+
+### Dennis Sabu
+**Frontend Development & Platform Integration**
+
+- Next.js frontend
+- UI/UX Design
+- Dashboard
+- Community Map
+- AI Chatbot
+- Platform integration
+
+---
+
+# 🌟 Vision
+
+Our vision is to create a unified AI-powered bridge between citizens and government authorities.
+
+Rather than requiring citizens to identify the appropriate department or complaint portal, CivicLens intelligently detects civic issues, evaluates their severity, removes duplicate reports, prioritizes them, and routes them to the appropriate authority.
+
+By combining computer vision, semantic similarity search, intelligent prioritization, and transparent tracking, CivicLens aims to improve public infrastructure management while enabling faster and more accountable civic governance.
+
+---
+
+## 📄 License
+
+This project was developed as part of a hackathon/research initiative and is intended for educational and demonstration purposes.
