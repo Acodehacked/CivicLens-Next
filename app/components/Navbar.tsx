@@ -19,6 +19,7 @@ const navLinks = [
 type CurrentUser = { displayName: string; href: string } | null;
 
 export default function Navbar({ currentUser = null }: { currentUser?: CurrentUser }) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const initials = currentUser
@@ -126,21 +127,24 @@ export default function Navbar({ currentUser = null }: { currentUser?: CurrentUs
               className="flex flex-col py-4 px-6 gap-2"
               aria-label="Mobile navigation"
             >
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "py-3 px-4 rounded-xl text-sm font-medium transition-colors",
-                    link.active
-                      ? "text-primary bg-surface-muted font-bold"
-                      : "text-on-surface-muted hover:text-primary hover:bg-surface-muted"
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "py-3 px-4 rounded-xl text-sm font-medium transition-colors",
+                      isActive
+                        ? "text-primary bg-surface-muted font-bold"
+                        : "text-on-surface-muted hover:text-primary hover:bg-surface-muted"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
               {currentUser ? (
                 <Link
                   href={currentUser.href}

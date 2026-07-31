@@ -20,7 +20,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Eye,
-  LogOut
+  LogOut,
+  ShieldCheck
 } from "lucide-react";
 
 const navItems = [
@@ -38,11 +39,11 @@ const secondaryNavItems = [
 ];
 
 export default function Sidebar({
-  displayName,
-  roleLabel,
+  displayName = "Staff",
+  roleLabel = "Department Staff",
 }: {
-  displayName: string;
-  roleLabel: string;
+  displayName?: string;
+  roleLabel?: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
