@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Bell, Sparkles, Calendar as CalendarIcon, Download, Menu, X, Eye, LayoutDashboard, Map, ListTodo, BarChart3, Building2, History, Settings, LogOut } from "lucide-react";
+import { Search, Bell, Sparkles, Calendar as CalendarIcon, Download, Menu, X, Eye, LayoutDashboard, Map, ListTodo, BarChart3, Building2, History, Settings, LogOut, HelpCircle } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -24,11 +24,11 @@ const secondaryNavItems = [
 ];
 
 export default function TopNav({
-  displayName,
-  roleLabel,
+  displayName = "Staff",
+  roleLabel = "Department Staff",
 }: {
-  displayName: string;
-  roleLabel: string;
+  displayName?: string;
+  roleLabel?: string;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentDate = format(new Date(), "MMM d, yyyy");
@@ -122,7 +122,7 @@ export default function TopNav({
           >
             <Bell size={18} />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          </Link>
 
           <div className="w-px h-6 bg-slate-200 hidden sm:block mx-1" />
 
