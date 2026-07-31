@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { motion } from "framer-motion";
 import ShowcasePanel from "./components/ShowcasePanel";
 import LoginForm from "./components/LoginForm";
@@ -33,7 +34,9 @@ export default function LoginPage() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="w-full flex justify-center z-10"
         >
-          <LoginForm />
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
         </motion.div>
 
         {/* Security & Footer */}

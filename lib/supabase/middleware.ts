@@ -1,5 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import type { Profile } from "@/db/schema";
+
+export type SessionRole = Profile["role"] | null;
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -25,9 +28,20 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refreshing the session here (rather than only in Server Components) keeps
-  // the auth cookie valid for both the app and the Hono API routes below /api.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return response;
+  let role: SessionRole = null;
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    role = profile?.role ?? null;
+  }
+
+  return { response, user, role };
 }

@@ -1,10 +1,20 @@
 "use client";
 
-import { Search, Bell, User } from "lucide-react";
+import { Search, Bell, LogOut } from "lucide-react";
 import { format } from "date-fns";
+import Link from "next/link";
+import { LogoutButton } from "@/components/logout-button";
 
-export default function TopNav() {
+export default function TopNav({ displayName }: { displayName: string | null }) {
   const currentDate = format(new Date(), "EEEE, MMMM do, yyyy");
+  const initials = displayName
+    ? displayName
+        .split(" ")
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : null;
 
   return (
     <header className="h-16 shrink-0 bg-white border-b border-border shadow-sm flex items-center justify-between px-6 z-20">
@@ -44,9 +54,29 @@ export default function TopNav() {
             <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
           </button>
           
-          <button className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-            JD
-          </button>
+          {displayName ? (
+            <>
+              <div
+                title={displayName}
+                className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm border border-slate-200"
+              >
+                {initials}
+              </div>
+              <LogoutButton
+                redirectTo="/"
+                className="p-2 rounded-lg border-none text-slate-500 hover:bg-slate-50 hover:text-red-600 transition-colors"
+              >
+                <LogOut size={16} />
+              </LogoutButton>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold shadow-sm hover:bg-primary-hover transition-colors"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       </div>
     </header>
