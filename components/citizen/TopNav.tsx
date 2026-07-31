@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, LogOut } from "lucide-react";
+import { Search, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
@@ -18,7 +18,7 @@ export default function TopNav({ displayName }: { displayName: string | null }) 
 
   return (
     <header className="h-16 shrink-0 bg-white border-b border-border shadow-sm flex items-center justify-between px-6 z-20">
-      
+
       {/* Left side: Search */}
       <div className="flex-1 max-w-md hidden sm:flex">
         <div className="relative w-full group">
@@ -48,16 +48,7 @@ export default function TopNav({ displayName }: { displayName: string | null }) 
             <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
             <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">AI Engine Active</span>
           </div>
-          
-          <Link 
-            href="/notifications" 
-            title="Notification Center"
-            className="relative w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            <Bell size={18} />
-            <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-          </Link>
-          
+
           {displayName ? (
             <>
               <div

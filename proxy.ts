@@ -10,7 +10,8 @@ import { updateSession } from "@/lib/supabase/middleware";
 //   /office/login, /office/signup -> staff get bounced straight to /admin
 //   /complete-profile             -> signed-in citizens only
 //   /login, /signup               -> staff go to /admin, citizens to /report
-//   /map/**, /report/**           -> staff get bounced to /admin
+//   /map, /report, /my-reports,
+//   /live, /departments           -> staff get bounced to /admin
 export default async function proxy(request: NextRequest) {
   const { response, user, role } = await updateSession(request);
   const path = request.nextUrl.pathname;
@@ -44,7 +45,13 @@ export default async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (path.startsWith("/map") || path.startsWith("/report")) {
+  if (
+    path.startsWith("/map") ||
+    path.startsWith("/report") ||
+    path.startsWith("/my-reports") ||
+    path.startsWith("/live") ||
+    path.startsWith("/departments")
+  ) {
     if (isStaff) return goTo("/admin");
     return response;
   }

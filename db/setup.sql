@@ -112,6 +112,19 @@ drop policy if exists "Profiles are viewable by everyone" on public.profiles;
 drop policy if exists "Users can view own profile" on public.profiles;
 drop policy if exists "Staff can view all profiles" on public.profiles;
 drop policy if exists "Users can update their own profile" on public.profiles;
+-- These four are NOT created anywhere in this file, but Supabase's dashboard
+-- "add policy" UI has suggested naive templates with these exact names in
+-- the past, and they cause real infinite recursion: they query `profiles`
+-- from inside a policy ON `profiles` without going through
+-- current_user_role()'s SECURITY DEFINER indirection, so evaluating them
+-- requires re-evaluating them, forever. If you ever see
+-- "infinite recursion detected in policy for relation profiles", it's
+-- because one of these (or something shaped like them) got added back
+-- outside this file - drop it again.
+drop policy if exists "admins can view all profiles" on public.profiles;
+drop policy if exists "admins can update any profile" on public.profiles;
+drop policy if exists "users can update their own name only" on public.profiles;
+drop policy if exists "users can view their own profile" on public.profiles;
 
 -- Citizens can see only their own profile (it holds PII: address, mobile,
 -- Aadhaar). Department staff/admins can see all profiles, since the admin
@@ -193,7 +206,7 @@ on conflict (name) do nothing;
 -- scoped to a per-user folder since there's no user to scope to).
 -- ---------------------------------------------------------------------
 insert into storage.buckets (id, name, public)
-values ('reports', 'reports', true)
+values ('report-images', 'report-images', true)
 on conflict (id) do nothing;
 
 drop policy if exists "Report images are publicly accessible" on storage.objects;
@@ -201,8 +214,8 @@ drop policy if exists "Anyone can upload a report image" on storage.objects;
 
 create policy "Report images are publicly accessible"
   on storage.objects for select
-  using (bucket_id = 'reports');
+  using (bucket_id = 'report-images');
 
 create policy "Anyone can upload a report image"
   on storage.objects for insert
-  with check (bucket_id = 'reports');
+  with check (bucket_id = 'report-images');

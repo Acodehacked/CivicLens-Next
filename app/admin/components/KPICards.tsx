@@ -1,65 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertOctagon, CheckCircle2, Clock, Activity, FileWarning, Sparkles } from "lucide-react";
+import { AlertOctagon, CheckCircle2, Clock, Activity, FileWarning, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-const kpiData = [
-  {
-    id: 1,
-    label: "Total Reports",
-    value: "2,543",
-    change: "+12%",
-    trend: "up",
-    icon: FileWarning,
-    color: "blue"
-  },
-  {
-    id: 2,
-    label: "Resolved Today",
-    value: "184",
-    change: "+5%",
-    trend: "up",
-    icon: CheckCircle2,
-    color: "green"
-  },
-  {
-    id: 3,
-    label: "Critical Issues",
-    value: "42",
-    change: "-3%",
-    trend: "down",
-    icon: AlertOctagon,
-    color: "red"
-  },
-  {
-    id: 4,
-    label: "Avg. Resolution Time",
-    value: "3.2 days",
-    change: "-1.5 days",
-    trend: "down",
-    icon: Clock,
-    color: "orange"
-  },
-  {
-    id: 5,
-    label: "AI Detection Accuracy",
-    value: "94.2%",
-    change: "+2.1%",
-    trend: "up",
-    icon: Sparkles,
-    color: "indigo"
-  },
-  {
-    id: 6,
-    label: "Citizen Satisfaction",
-    value: "4.8/5",
-    change: "+0.2",
-    trend: "up",
-    icon: Activity,
-    color: "purple"
-  }
-];
+export type DashboardStats = {
+  total: number;
+  open: number;
+  inProgress: number;
+  resolved: number;
+  critical: number;
+  avgPriority: number;
+};
 
 const colorMap: Record<string, { bg: string, text: string, border: string }> = {
   blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
@@ -70,7 +22,16 @@ const colorMap: Record<string, { bg: string, text: string, border: string }> = {
   purple: { bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-100" },
 };
 
-export default function KPICards() {
+export default function KPICards({ stats }: { stats: DashboardStats }) {
+  const kpiData = [
+    { id: 1, label: "Total Reports", value: stats.total.toLocaleString(), icon: FileWarning, color: "blue" },
+    { id: 2, label: "Open Issues", value: stats.open.toLocaleString(), icon: Clock, color: "orange" },
+    { id: 3, label: "In Progress", value: stats.inProgress.toLocaleString(), icon: Loader2, color: "indigo" },
+    { id: 4, label: "Resolved", value: stats.resolved.toLocaleString(), icon: CheckCircle2, color: "green" },
+    { id: 5, label: "Critical Severity", value: stats.critical.toLocaleString(), icon: AlertOctagon, color: "red" },
+    { id: 6, label: "Avg Priority Score", value: stats.avgPriority.toFixed(1), icon: Activity, color: "purple" },
+  ];
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
       {kpiData.map((kpi, idx) => {
@@ -86,15 +47,6 @@ export default function KPICards() {
             <div className="flex items-start justify-between mb-3">
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-105", colors.bg, colors.text, colors.border)}>
                 <kpi.icon size={20} />
-              </div>
-              <div className={cn(
-                "px-2 py-0.5 rounded text-[10px] font-bold border",
-                kpi.trend === "up" && kpi.color !== "red" ? "bg-green-50 text-green-700 border-green-100" : 
-                kpi.trend === "down" && kpi.color === "red" ? "bg-green-50 text-green-700 border-green-100" :
-                kpi.trend === "down" && kpi.color === "orange" ? "bg-green-50 text-green-700 border-green-100" :
-                "bg-red-50 text-red-700 border-red-100"
-              )}>
-                {kpi.change}
               </div>
             </div>
             <div>

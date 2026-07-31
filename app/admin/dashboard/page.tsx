@@ -1,5 +1,3 @@
-"use client";
-
 import KPICards from "../components/KPICards";
 import ReportsTable from "../components/ReportsTable";
 import PriorityQueue from "../components/PriorityQueue";
@@ -7,12 +5,29 @@ import DepartmentPerformance from "../components/DepartmentPerformance";
 import AnalyticsCharts from "../components/AnalyticsCharts";
 import AIInsightsPanel from "../components/AIInsightsPanel";
 import RecentActivity from "../components/RecentActivity";
+import { getStaffContext } from "@/lib/auth/staff-context";
+import { db } from "@/db/client";
+import { complaints } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 
-import dynamic from "next/dynamic";
+import DashboardMapClient from "./DashboardMapClient";
 
-const DynamicDashboardMap = dynamic(() => import("../components/DashboardMap"), { ssr: false });
+export default async function AdminDashboardPage() {
+  const { role, department } = await getStaffContext();
+  const scope = role === "admin" ? undefined : eq(complaints.department, department!);
 
-export default function AdminDashboardPage() {
+  const [stats] = await db
+    .select({
+      total: sql<number>`count(*)`.mapWith(Number),
+      open: sql<number>`count(*) filter (where ${complaints.status} = 'open')`.mapWith(Number),
+      inProgress: sql<number>`count(*) filter (where ${complaints.status} = 'in_progress')`.mapWith(Number),
+      resolved: sql<number>`count(*) filter (where ${complaints.status} = 'resolved')`.mapWith(Number),
+      critical: sql<number>`count(*) filter (where ${complaints.severity} = 'critical')`.mapWith(Number),
+      avgPriority: sql<number>`coalesce(avg(${complaints.priorityScore}), 0)`.mapWith(Number),
+    })
+    .from(complaints)
+    .where(scope);
+
   return (
     <div className="p-3 sm:p-5 lg:p-8 max-w-[1600px] mx-auto flex flex-col xl:flex-row gap-4 sm:gap-6">
       
@@ -33,12 +48,12 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* KPIs */}
-        <KPICards />
+        <KPICards stats={stats} />
 
         {/* Map & Queues Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <DynamicDashboardMap />
+            <DashboardMapClient />
           </div>
           <div className="h-[450px]">
             <PriorityQueue />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Bell, Sparkles, Calendar as CalendarIcon, Download, Menu, X, Eye, LayoutDashboard, Map, ListTodo, BarChart3, Building2, History, Settings, LogOut, HelpCircle } from "lucide-react";
+import { Search, Bell, Calendar as CalendarIcon, Download, Menu, X, Eye, LayoutDashboard, ListChecks, ClipboardCheck, ListTodo, BarChart3, Building2, History, Settings, LogOut, HelpCircle } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -11,7 +11,9 @@ import { LogoutButton } from "@/components/logout-button";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
-  { icon: ListTodo, label: "Priority Queue", href: "/admin/priority-queue", badge: 3 },
+  { icon: ListChecks, label: "Issues", href: "/admin/issues" },
+  { icon: ClipboardCheck, label: "Confirmations", href: "/admin/confirmations" },
+  { icon: ListTodo, label: "Priority Queue", href: "/admin/priority-queue" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Building2, label: "Departments", href: "/admin/departments" },
 ];
@@ -199,11 +201,6 @@ export default function TopNav({
                       <item.icon size={18} className="shrink-0" />
                       <div className="flex flex-1 items-center justify-between truncate">
                         <span>{item.label}</span>
-                        {item.badge && (
-                          <span className="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-bold">
-                            {item.badge}
-                          </span>
-                        )}
                       </div>
                     </Link>
                   );

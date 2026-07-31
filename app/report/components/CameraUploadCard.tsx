@@ -6,12 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 import { format } from "date-fns";
 
-export default function CameraUploadCard({ onUploadComplete }: { onUploadComplete: (hasImage: boolean) => void }) {
+export default function CameraUploadCard({ onUploadComplete }: { onUploadComplete: (file: File | null) => void }) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedFile, setCapturedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<{ size: string; res: string; time: string } | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -20,6 +21,7 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
 
   // Attach stream to video element whenever stream state updates
   useEffect(() => {
@@ -131,17 +133,28 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     }
 
-    const imageUrl = canvas.toDataURL("image/jpeg", 0.92);
-    const bytes = Math.round((imageUrl.length * 3) / 4);
-
-    setCapturedImage(imageUrl);
-    setMetadata({
-      size: (bytes / (1024 * 1024)).toFixed(1) + " MB",
-      res: `${canvas.width} × ${canvas.height}`,
-      time: format(new Date(), "h:mm a"),
-    });
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `capture-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        });
+        if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+        const url = URL.createObjectURL(blob);
+        previewUrlRef.current = url;
+        setCapturedFile(file);
+        setPreviewUrl(url);
+        setMetadata({
+          size: (blob.size / (1024 * 1024)).toFixed(1) + " MB",
+          res: `${canvas.width} × ${canvas.height}`,
+          time: format(new Date(), "h:mm a"),
+        });
+        onUploadComplete(file);
+      },
+      "image/jpeg",
+      0.92
+    );
     stopCamera();
-    onUploadComplete(true);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,30 +165,38 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
   };
 
   const processFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      if (!result) return;
-      const img = new Image();
-      img.onload = () => {
-        setCapturedImage(result);
-        setMetadata({
-          size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
-          res: `${img.width} × ${img.height}`,
-          time: format(new Date(), "h:mm a"),
-        });
-        onUploadComplete(true);
-      };
-      img.src = result;
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = objectUrl;
+      setCapturedFile(file);
+      setPreviewUrl(objectUrl);
+      setMetadata({
+        size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
+        res: `${img.width} × ${img.height}`,
+        time: format(new Date(), "h:mm a"),
+      });
+      onUploadComplete(file);
     };
-    reader.readAsDataURL(file);
+    img.src = objectUrl;
   };
 
   const resetImage = () => {
-    setCapturedImage(null);
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = null;
+    setPreviewUrl(null);
+    setCapturedFile(null);
     setMetadata(null);
-    onUploadComplete(false);
+    onUploadComplete(null);
   };
+
+  // Revoke the object URL on unmount so we don't leak memory.
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
 
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
@@ -220,7 +241,7 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
 
       <AnimatePresence mode="wait">
         {/* ── IDLE STATE ── */}
-        {!capturedImage && !isCameraOpen && (
+        {!capturedFile && !isCameraOpen && (
           <motion.div
             key="idle"
             initial={{ opacity: 0 }}
@@ -392,7 +413,7 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
         )}
 
         {/* ── CAPTURED IMAGE STATE ── */}
-        {capturedImage && (
+        {capturedFile && previewUrl && (
           <motion.div
             key="captured"
             initial={{ opacity: 0, scale: 0.98 }}
@@ -402,7 +423,7 @@ export default function CameraUploadCard({ onUploadComplete }: { onUploadComplet
           >
             <div className="relative w-full h-64 sm:h-80 rounded-xl overflow-hidden bg-black/5 group">
               <img
-                src={capturedImage}
+                src={previewUrl}
                 alt="Captured Evidence"
                 className="w-full h-full object-cover"
               />

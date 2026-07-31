@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils/cn";
 import { LogoutButton } from "@/components/logout-button";
 import {
   LayoutDashboard,
-  MapPin,
-  Map,
+  ListChecks,
+  ClipboardCheck,
   ListTodo,
   BarChart3,
   Building2,
@@ -19,14 +19,15 @@ import {
   HelpCircle,
   PanelLeftClose,
   PanelLeftOpen,
-  Eye,
   LogOut,
   ShieldCheck
 } from "lucide-react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
-  { icon: ListTodo, label: "Priority Queue", href: "/admin/priority-queue", badge: 3 },
+  { icon: ListChecks, label: "Issues", href: "/admin/issues" },
+  { icon: ClipboardCheck, label: "Confirmations", href: "/admin/confirmations" },
+  { icon: ListTodo, label: "Priority Queue", href: "/admin/priority-queue" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Building2, label: "Departments", href: "/admin/departments" },
 ];
@@ -41,9 +42,11 @@ const secondaryNavItems = [
 export default function Sidebar({
   displayName = "Staff",
   roleLabel = "Department Staff",
+  pendingCount = 0,
 }: {
   displayName?: string;
   roleLabel?: string;
+  pendingCount?: number;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
@@ -115,9 +118,9 @@ export default function Sidebar({
               {!collapsed && (
                 <div className="flex flex-1 items-center justify-between truncate">
                   <span>{item.label}</span>
-                  {item.badge && (
+                  {item.href === "/admin/confirmations" && pendingCount > 0 && (
                     <span className="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-bold">
-                      {item.badge}
+                      {pendingCount}
                     </span>
                   )}
                 </div>
