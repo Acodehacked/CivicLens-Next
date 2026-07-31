@@ -1,17 +1,56 @@
 -- Run once in the Supabase SQL editor after `bun run db:push` (or
--- `db:migrate`) has created the `profiles` and `posts` tables. Drizzle only
--- owns table/column DDL - RLS policies, triggers, and storage buckets are
--- managed here since they're Supabase/Postgres concerns outside the schema.
+-- `db:migrate`) has created the tables in db/schema.ts. Drizzle only owns
+-- table/column DDL - RLS policies, triggers, and storage buckets are managed
+-- here since they're Supabase/Postgres concerns outside the schema.
 
--- 1. Keep a `profiles` row in sync with every `auth.users` row.
+-- ---------------------------------------------------------------------
+-- 1. Auto-create a `profiles` row for every new `auth.users` row.
+--
+-- Both citizen signup (app/signup) and department signup (app/office/signup)
+-- call `supabase.auth.signUp()` with an `account_type` field in the user's
+-- metadata ("citizen" | "department_staff"). This trigger reads that
+-- metadata to set the initial role - but NEVER trusts a request for
+-- "admin", since that would let anyone self-escalate to full admin by
+-- crafting a signup request. Promoting a department_staff account to admin
+-- is a manual, server-side-only operation (update the row directly).
+-- ---------------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
+declare
+  requested_role public.user_role;
 begin
-  insert into public.profiles (id, display_name)
-  values (new.id, new.email);
+  requested_role := coalesce(
+    (new.raw_user_meta_data->>'account_type')::public.user_role,
+    'citizen'
+  );
+
+  if requested_role = 'admin' then
+    requested_role := 'citizen';
+  end if;
+
+  insert into public.profiles (
+    id,
+    role,
+    department,
+    full_name,
+    address,
+    mobile_number,
+    aadhaar_number,
+    profession
+  )
+  values (
+    new.id,
+    requested_role,
+    nullif(new.raw_user_meta_data->>'department', '')::public.department_type,
+    coalesce(new.raw_user_meta_data->>'full_name', new.email),
+    new.raw_user_meta_data->>'address',
+    new.raw_user_meta_data->>'mobile_number',
+    nullif(new.raw_user_meta_data->>'aadhaar_number', ''),
+    new.raw_user_meta_data->>'profession'
+  );
   return new;
 end;
 $$;
@@ -21,35 +60,92 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- 2. Row Level Security.
+-- ---------------------------------------------------------------------
+-- 2. Lock `role` and `department` against self-service updates.
+--
+-- RLS's `with check` can't cleanly express "this column may not change",
+-- so this is done with a trigger instead: any UPDATE run as the
+-- `authenticated` role (i.e. from the browser/server acting as the user,
+-- not a trusted service-role/admin context) has role/department pinned
+-- back to their existing values, no matter what the client sent.
+-- ---------------------------------------------------------------------
+create or replace function public.lock_profile_role()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if auth.role() = 'authenticated' then
+    new.role := old.role;
+    new.department := old.department;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists lock_profile_role_trigger on public.profiles;
+create trigger lock_profile_role_trigger
+  before update on public.profiles
+  for each row execute function public.lock_profile_role();
+
+-- ---------------------------------------------------------------------
+-- 3. Helper to read the current user's role without recursive RLS.
+-- SECURITY DEFINER runs as the function owner, bypassing RLS on this one
+-- internal lookup, so policies that call it don't recurse into themselves.
+-- ---------------------------------------------------------------------
+create or replace function public.current_user_role()
+returns public.user_role
+language sql
+stable
+security definer set search_path = public
+as $$
+  select role from public.profiles where id = auth.uid();
+$$;
+
+-- ---------------------------------------------------------------------
+-- 4. Row Level Security.
+-- ---------------------------------------------------------------------
 alter table public.profiles enable row level security;
-alter table public.posts enable row level security;
+alter table public.departments enable row level security;
 
-create policy "Profiles are viewable by everyone"
+drop policy if exists "Profiles are viewable by everyone" on public.profiles;
+drop policy if exists "Users can view own profile" on public.profiles;
+drop policy if exists "Staff can view all profiles" on public.profiles;
+drop policy if exists "Users can update their own profile" on public.profiles;
+
+-- Citizens can see only their own profile (it holds PII: address, mobile,
+-- Aadhaar). Department staff/admins can see all profiles, since the admin
+-- dashboard needs reporter/staff info.
+create policy "Users can view own profile"
   on public.profiles for select
-  using (true);
+  using (auth.uid() = id);
 
+create policy "Staff can view all profiles"
+  on public.profiles for select
+  using (public.current_user_role() in ('admin', 'department_staff'));
+
+-- Anyone can update their own row, but lock_profile_role_trigger (above)
+-- silently discards any attempted change to role/department.
 create policy "Users can update their own profile"
   on public.profiles for update
   using (auth.uid() = id);
 
-create policy "Posts are viewable by everyone"
-  on public.posts for select
+create policy "Departments are viewable by everyone"
+  on public.departments for select
   using (true);
 
-create policy "Users can insert their own posts"
-  on public.posts for insert
-  with check (auth.uid() = author_id);
-
-create policy "Users can delete their own posts"
-  on public.posts for delete
-  using (auth.uid() = author_id);
-
--- 3. Storage bucket for lib/supabase/storage.ts (avatars, keyed by user id
+-- ---------------------------------------------------------------------
+-- 5. Storage bucket for lib/supabase/storage.ts (avatars, keyed by user id
 -- folder: "<user_id>/<filename>").
+-- ---------------------------------------------------------------------
 insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
+
+drop policy if exists "Avatar images are publicly accessible" on storage.objects;
+drop policy if exists "Users can upload their own avatar" on storage.objects;
+drop policy if exists "Users can update their own avatar" on storage.objects;
+drop policy if exists "Users can delete their own avatar" on storage.objects;
 
 create policy "Avatar images are publicly accessible"
   on storage.objects for select
@@ -75,3 +171,15 @@ create policy "Users can delete their own avatar"
     bucket_id = 'avatars'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- ---------------------------------------------------------------------
+-- 6. Seed the five departments this app's YOLO classes route to. Safe to
+-- re-run - `on conflict do nothing` skips rows that already exist.
+-- ---------------------------------------------------------------------
+insert into public.departments (name, contact_email) values
+  ('roads', null),
+  ('sanitation', null),
+  ('drainage', null),
+  ('disaster_management', null),
+  ('parks', null)
+on conflict (name) do nothing;

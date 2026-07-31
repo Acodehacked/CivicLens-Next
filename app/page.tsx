@@ -8,11 +8,32 @@ import Benefits from "@/app/components/Benefits";
 import Testimonials from "@/app/components/Testimonials";
 import FinalCTA from "@/app/components/FinalCTA";
 import Footer from "@/app/components/Footer";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let currentUser: { displayName: string; href: string } | null = null;
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, role")
+      .eq("id", user.id)
+      .single();
+
+    currentUser = {
+      displayName: profile?.full_name || user.email || "Account",
+      href: profile?.role === "admin" || profile?.role === "department_staff" ? "/admin" : "/report",
+    };
+  }
+
   return (
     <>
-      <Navbar />
+      <Navbar currentUser={currentUser} />
       <main className="w-full flex flex-col bg-background">
         <Hero />
         <Features />
@@ -27,3 +48,4 @@ export default function Home() {
     </>
   );
 }
+
