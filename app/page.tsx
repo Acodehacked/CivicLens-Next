@@ -10,7 +10,6 @@ import Testimonials from "@/app/components/Testimonials";
 import FinalCTA from "@/app/components/FinalCTA";
 import Footer from "@/app/components/Footer";
 
-export default function Home() {
   return (
     <>
       <Navbar />
