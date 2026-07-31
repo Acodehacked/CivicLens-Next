@@ -1,36 +1,32 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { User, Mail, Lock, Building2, Eye, EyeOff, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { signupDepartmentStaff } from "../actions";
+import { departmentSignupSchema, type DepartmentSignupValues } from "../schema";
 import { DEPARTMENTS, DEPARTMENT_LABELS } from "@/lib/constants/departments";
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full mt-2 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary-hover hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
-    >
-      {pending ? (
-        <>
-          <Loader2 size={18} className="animate-spin" />
-          Creating account...
-        </>
-      ) : (
-        "Register Department Account"
-      )}
-    </button>
-  );
-}
 
 export default function OfficeSignupForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [state, formAction] = useActionState(signupDepartmentStaff, undefined);
+  const [state, formAction, isPending] = useActionState(signupDepartmentStaff, undefined);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<DepartmentSignupValues>({ resolver: zodResolver(departmentSignupSchema) });
+
+  function onValid(values: DepartmentSignupValues) {
+    const formData = new FormData();
+    formData.set("fullName", values.fullName);
+    formData.set("email", values.email);
+    formData.set("password", values.password);
+    formData.set("department", values.department);
+    formAction(formData);
+  }
 
   if (state?.message) {
     return (
@@ -60,7 +56,7 @@ export default function OfficeSignupForm() {
         </p>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-5" noValidate>
         {state?.error && (
           <div className="rounded-xl bg-error-bg border border-error/20 px-4 py-3 text-sm font-medium text-error">
             {state.error}
@@ -74,14 +70,14 @@ export default function OfficeSignupForm() {
               <User size={18} />
             </div>
             <input
-              name="fullName"
+              {...register("fullName")}
               id="fullName"
               type="text"
-              required
               placeholder="Jane Doe"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
           </div>
+          {errors.fullName && <span className="text-xs font-medium text-error">{errors.fullName.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -91,14 +87,14 @@ export default function OfficeSignupForm() {
               <Mail size={18} />
             </div>
             <input
-              name="email"
+              {...register("email")}
               id="email"
               type="email"
-              required
               placeholder="name@city.gov"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
           </div>
+          {errors.email && <span className="text-xs font-medium text-error">{errors.email.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -108,9 +104,8 @@ export default function OfficeSignupForm() {
               <Building2 size={18} />
             </div>
             <select
-              name="department"
+              {...register("department")}
               id="department"
-              required
               defaultValue=""
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm appearance-none"
             >
@@ -120,6 +115,7 @@ export default function OfficeSignupForm() {
               ))}
             </select>
           </div>
+          {errors.department && <span className="text-xs font-medium text-error">{errors.department.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -129,11 +125,9 @@ export default function OfficeSignupForm() {
               <Lock size={18} />
             </div>
             <input
-              name="password"
+              {...register("password")}
               id="password"
               type={showPassword ? "text" : "password"}
-              required
-              minLength={8}
               placeholder="At least 8 characters"
               className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
@@ -145,9 +139,23 @@ export default function OfficeSignupForm() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {errors.password && <span className="text-xs font-medium text-error">{errors.password.message}</span>}
         </div>
 
-        <SubmitButton />
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full mt-2 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary-hover hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
+        >
+          {isPending ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Register Department Account"
+          )}
+        </button>
       </form>
 
       <div className="mt-8 text-center">

@@ -1,42 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
-import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loginCitizen, loginCitizenWithGoogle } from "../actions";
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full mt-2 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary-hover hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
-    >
-      {pending ? (
-        <>
-          <Loader2 size={18} className="animate-spin" />
-          Signing in...
-        </>
-      ) : (
-        "Sign In"
-      )}
-    </button>
-  );
-}
+import { loginSchema, type LoginValues } from "../schema";
 
 function GoogleButton() {
-  const { pending } = useFormStatus();
-
   return (
     <button
       type="submit"
-      disabled={pending}
-      className="w-full py-2.5 bg-white border border-border rounded-xl text-sm font-semibold text-primary shadow-sm hover:bg-surface-muted hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:pointer-events-none"
+      className="w-full py-2.5 bg-white border border-border rounded-xl text-sm font-semibold text-primary shadow-sm hover:bg-surface-muted hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3"
     >
       <svg className="w-4 h-4" viewBox="0 0 24 24">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -44,16 +21,29 @@ function GoogleButton() {
         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
       </svg>
-      {pending ? "Redirecting to Google..." : "Continue with Google"}
+      Continue with Google
     </button>
   );
 }
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [state, formAction] = useActionState(loginCitizen, undefined);
+  const [state, formAction, isPending] = useActionState(loginCitizen, undefined);
   const searchParams = useSearchParams();
   const oauthError = searchParams.get("error");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
+
+  function onValid(values: LoginValues) {
+    const formData = new FormData();
+    formData.set("email", values.email);
+    formData.set("password", values.password);
+    formAction(formData);
+  }
 
   return (
     <div className="w-full max-w-[420px] flex flex-col">
@@ -67,7 +57,7 @@ export default function LoginForm() {
         <p className="text-sm text-on-surface-muted">Sign in to report and track civic issues in your city.</p>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-5" noValidate>
 
         {(state?.error || oauthError) && (
           <div className="rounded-xl bg-error-bg border border-error/20 px-4 py-3 text-sm font-medium text-error">
@@ -83,14 +73,14 @@ export default function LoginForm() {
               <Mail size={18} />
             </div>
             <input
-              name="email"
+              {...register("email")}
               id="email"
               type="email"
-              required
               placeholder="you@example.com"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
           </div>
+          {errors.email && <span className="text-xs font-medium text-error">{errors.email.message}</span>}
         </div>
 
         {/* Password Field */}
@@ -101,10 +91,9 @@ export default function LoginForm() {
               <Lock size={18} />
             </div>
             <input
-              name="password"
+              {...register("password")}
               id="password"
               type={showPassword ? "text" : "password"}
-              required
               placeholder="••••••••"
               className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border bg-white text-sm text-primary placeholder:text-on-surface-muted/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
             />
@@ -116,9 +105,23 @@ export default function LoginForm() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {errors.password && <span className="text-xs font-medium text-error">{errors.password.message}</span>}
         </div>
 
-        <SubmitButton />
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full mt-2 py-3 bg-primary text-white rounded-xl text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary-hover hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
+        >
+          {isPending ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign In"
+          )}
+        </button>
       </form>
 
       {/* Divider */}

@@ -19,6 +19,7 @@ const navLinks = [
 type CurrentUser = { displayName: string; href: string } | null;
 
 export default function Navbar({ currentUser = null }: { currentUser?: CurrentUser }) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const initials = currentUser
@@ -133,7 +134,7 @@ export default function Navbar({ currentUser = null }: { currentUser?: CurrentUs
                   onClick={() => setMobileOpen(false)}
                   className={cn(
                     "py-3 px-4 rounded-xl text-sm font-medium transition-colors",
-                    link.active
+                      pathname == link.href
                       ? "text-primary bg-surface-muted font-bold"
                       : "text-on-surface-muted hover:text-primary hover:bg-surface-muted"
                   )}
