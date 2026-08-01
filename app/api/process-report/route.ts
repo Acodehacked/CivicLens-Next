@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { ImageSegregatorUrl } from "@/constants/lib";
+import { db } from "@/db/client";
+import { departments } from "@/db/schema";
+import { sendNewIssueEmail } from "@/lib/email/notifications";
+import { formatIssueLabel } from "@/lib/constants/severity";
+import { DEPARTMENT_LABELS, type DepartmentType } from "@/lib/constants/departments";
 
 // Proxies to the FastAPI detection backend's POST /process-report instead of
 // calling it directly from the browser - sidesteps depending on that
@@ -54,6 +60,33 @@ export async function POST(request: Request) {
           : "The detection service hit an unexpected error processing this image. Please try again in a moment.";
 
       return NextResponse.json({ error }, { status: res.status });
+    }
+
+    // Only a brand-new complaint warrants a "new issue" email - a "merged"
+    // result just corroborates an existing one the department was already
+    // notified about. Best-effort: never let a failed send affect the
+    // response the citizen sees.
+    if (data?.status === "created" && data?.department) {
+      try {
+        const [dept] = await db
+          .select({ contactEmail: departments.contactEmail })
+          .from(departments)
+          .where(eq(departments.name, data.department))
+          .limit(1);
+
+        if (dept?.contactEmail) {
+          await sendNewIssueEmail({
+            to: dept.contactEmail,
+            issueTitle: formatIssueLabel(data.yolo_class),
+            severity: data.severity ?? null,
+            department: DEPARTMENT_LABELS[data.department as DepartmentType] ?? data.department,
+            addressText: null,
+            complaintId: data.complaint_id,
+          });
+        }
+      } catch (err) {
+        console.error("[process-report] failed to send new-issue email:", err);
+      }
     }
 
     return NextResponse.json(data);

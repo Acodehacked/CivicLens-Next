@@ -189,6 +189,12 @@ export const profiles = pgTable("profiles", {
   mobileNumber: text("mobile_number"),
   aadhaarNumber: text("aadhaar_number"), // optional; 12-digit Indian ID, validated at the app layer
   profession: text("profession"),
+  // Checked before sending any status-change / new-issue email (see
+  // lib/email/notifications.ts) - lets a user opt out without losing their
+  // account's other settings.
+  emailNotificationsEnabled: boolean("email_notifications_enabled")
+    .notNull()
+    .default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

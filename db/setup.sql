@@ -219,3 +219,11 @@ create policy "Report images are publicly accessible"
 create policy "Anyone can upload a report image"
   on storage.objects for insert
   with check (bucket_id = 'report-images');
+
+-- ---------------------------------------------------------------------
+-- 8. Email notification preference (lib/email/notifications.ts checks this
+-- before sending any status-change / new-issue email). Defaults to true so
+-- existing accounts keep getting notified unless they opt out.
+-- ---------------------------------------------------------------------
+alter table public.profiles
+  add column if not exists email_notifications_enabled boolean not null default true;

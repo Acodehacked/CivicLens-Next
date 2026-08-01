@@ -331,3 +331,143 @@ export async function getTotalReportsSubmitted(department: DepartmentType | null
     .where(scope);
   return row.count;
 }
+
+export type HistoryEntry = {
+  id: string;
+  yoloClass: string | null;
+  severity: string;
+  status: string;
+  department: string;
+  reportCount: number;
+  priorityScore: number;
+  addressText: string | null;
+  imageUrl: string;
+  thumbnailUrl: string | null;
+  firstReportedAt: Date;
+  lastReportedAt: Date;
+  resolvedAt: Date | null;
+};
+
+// Every complaint, most recently active first - real chain-of-custody
+// data (what it is, where, current status, when first/last reported and
+// resolved). No fabricated "actor" concept - we don't log who performed
+// which action, only the complaint's current state.
+export async function getHistoryLog(department: DepartmentType | null, limit = 100): Promise<HistoryEntry[]> {
+  return db
+    .select({
+      id: complaints.id,
+      yoloClass: complaints.yoloClass,
+      severity: complaints.severity,
+      status: complaints.status,
+      department: complaints.department,
+      reportCount: complaints.reportCount,
+      priorityScore: complaints.priorityScore,
+      addressText: complaints.addressText,
+      imageUrl: complaints.imageUrl,
+      thumbnailUrl: complaints.thumbnailUrl,
+      firstReportedAt: complaints.firstReportedAt,
+      lastReportedAt: complaints.lastReportedAt,
+      resolvedAt: complaints.resolvedAt,
+    })
+    .from(complaints)
+    .where(departmentScope(department))
+    .orderBy(desc(complaints.lastReportedAt))
+    .limit(limit);
+}
+
+// Real average time-to-resolution in hours, computed from resolved_at -
+// first_reported_at on complaints that actually have a resolved_at (set by
+// the DB trigger on status change - see db/schema.ts). Null if nothing has
+// been resolved yet, rather than a misleading 0.
+export async function getAvgResolutionHours(department: DepartmentType | null): Promise<number | null> {
+  const scope = departmentScope(department);
+  const resolvedOnly = isNotNull(complaints.resolvedAt);
+  const where = scope ? and(scope, resolvedOnly) : resolvedOnly;
+
+  const [row] = await db
+    .select({
+      avgHours: sql<number | null>`avg(extract(epoch from (${complaints.resolvedAt} - ${complaints.firstReportedAt})) / 3600)`,
+      count: sql<number>`count(*)`.mapWith(Number),
+    })
+    .from(complaints)
+    .where(where);
+
+  if (!row || row.count === 0 || row.avgHours == null) return null;
+  return Number(row.avgHours);
+}
+
+export type NotificationItem = {
+  id: string;
+  kind: "new" | "critical" | "stale";
+  yoloClass: string | null;
+  severity: string;
+  department: string;
+  addressText: string | null;
+  reportCount: number;
+  timestamp: Date;
+};
+
+// Derived, not persisted - there's no notifications table (and therefore
+// no real read/unread state to track), so this recomputes "what needs
+// attention right now" from live complaint data every time it's loaded:
+// unconfirmed new reports, unresolved critical severity, and open issues
+// that have sat for more than 48 hours.
+export async function getNotificationFeed(department: DepartmentType | null, limit = 30): Promise<NotificationItem[]> {
+  const scope = departmentScope(department);
+
+  const newOnes = await db
+    .select({
+      id: complaints.id,
+      yoloClass: complaints.yoloClass,
+      severity: complaints.severity,
+      department: complaints.department,
+      addressText: complaints.addressText,
+      reportCount: complaints.reportCount,
+      timestamp: complaints.firstReportedAt,
+    })
+    .from(complaints)
+    .where(scope ? and(scope, eq(complaints.status, "open")) : eq(complaints.status, "open"))
+    .orderBy(desc(complaints.firstReportedAt))
+    .limit(limit);
+
+  const staleCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const staleFilter = and(
+    eq(complaints.status, "open"),
+    sql`${complaints.firstReportedAt} < ${staleCutoff.toISOString()}::timestamptz`
+  );
+  const stale = await db
+    .select({
+      id: complaints.id,
+      yoloClass: complaints.yoloClass,
+      severity: complaints.severity,
+      department: complaints.department,
+      addressText: complaints.addressText,
+      reportCount: complaints.reportCount,
+      timestamp: complaints.firstReportedAt,
+    })
+    .from(complaints)
+    .where(scope ? and(scope, staleFilter) : staleFilter)
+    .orderBy(complaints.firstReportedAt)
+    .limit(limit);
+
+  const items: NotificationItem[] = [
+    ...newOnes.map((r) => ({ ...r, kind: "critical" as const, id: r.id })).filter((r) => r.severity === "critical"),
+    ...stale.map((r) => ({ ...r, kind: "stale" as const })),
+    ...newOnes.map((r) => ({ ...r, kind: "new" as const })),
+  ];
+
+  // De-dupe by id+kind (a complaint can legitimately appear once per
+  // relevant kind - e.g. both "new" and "critical" - but not twice for the
+  // same kind), most recent first.
+  const seen = new Set<string>();
+  const deduped = items.filter((item) => {
+    const key = `${item.kind}:${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return deduped
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, limit);
+}
