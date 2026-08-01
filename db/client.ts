@@ -26,6 +26,21 @@ if (!connectionString) {
 // serverless: each invocation only ever needs one connection from its own
 // perspective - the pooler handles concurrency across invocations, not the
 // client library.
-const client = postgres(connectionString, { prepare: false, max: 1 });
+//
+// `idle_timeout` and `max_lifetime` bound how long this module-level client
+// holds its one connection open. Without them a warm Vercel Lambda can be
+// frozen between invocations for a long time; if Supabase's pooler closes
+// the idle connection server-side during that freeze, the client doesn't
+// find out and sends the next query down a dead socket, which surfaces as
+// a hang or a confusing auth/timeout error rather than a clean reconnect.
+// `connect_timeout` makes a bad/unreachable pooler fail fast instead of
+// hanging the request.
+const client = postgres(connectionString, {
+  prepare: false,
+  max: 1,
+  idle_timeout: 20,
+  max_lifetime: 60 * 30,
+  connect_timeout: 10,
+});
 
 export const db = drizzle(client, { schema });
