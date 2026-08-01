@@ -1,42 +1,30 @@
-import { eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
-import { getStaffContext } from "@/lib/auth/staff-context";
-import { createClient } from "@/lib/supabase/server";
-import { getStaffDirectory, getDepartmentSettings } from "@/lib/data/settings";
+"use client";
+
+import { useEffect, useState } from "react";
 import SettingsPage from "@/app/admin/pages/settings/SettingsPage";
+import AdminErrorPanel from "../components/AdminErrorPanel";
+import AdminLoading from "../components/AdminLoading";
+import { fetchAdminSettings, type SettingsData } from "@/lib/api/admin";
 
-export default async function SettingsRoute() {
-  const { userId, role, department, fullName } = await getStaffContext();
+export default function SettingsRoute() {
+  const [data, setData] = useState<SettingsData | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  useEffect(() => {
+    fetchAdminSettings()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err : new Error(String(err))));
+  }, []);
 
-  const [profileRow] = await db
-    .select({ emailNotificationsEnabled: profiles.emailNotificationsEnabled })
-    .from(profiles)
-    .where(eq(profiles.id, userId));
-
-  const scope = role === "admin" ? null : department;
-  const [staff, departmentSettings] = await Promise.all([
-    getStaffDirectory(scope),
-    role === "admin" ? getDepartmentSettings() : Promise.resolve([]),
-  ]);
+  if (error) return <AdminErrorPanel error={error} />;
+  if (!data) return <AdminLoading />;
 
   return (
     <SettingsPage
-      profile={{
-        fullName,
-        email: user?.email ?? null,
-        role,
-        department,
-        emailNotificationsEnabled: profileRow?.emailNotificationsEnabled ?? true,
-      }}
-      staff={staff}
-      departmentSettings={departmentSettings}
-      isAdmin={role === "admin"}
+      profile={data.profile}
+      staff={data.staff}
+      departmentSettings={data.departmentSettings}
+      isAdmin={data.isAdmin}
     />
   );
 }

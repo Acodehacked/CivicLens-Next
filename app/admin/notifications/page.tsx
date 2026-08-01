@@ -1,12 +1,23 @@
-import { getStaffContext } from "@/lib/auth/staff-context";
-import { getNotificationFeed } from "@/lib/data/analytics";
+"use client";
+
+import { useEffect, useState } from "react";
 import NotificationsPage from "@/app/admin/pages/notifications/NotificationsPage";
+import AdminErrorPanel from "../components/AdminErrorPanel";
+import AdminLoading from "../components/AdminLoading";
+import { fetchNotifications, type NotificationsData } from "@/lib/api/admin";
 
-export default async function NotificationsRoute() {
-  const { role, department } = await getStaffContext();
-  const scope = role === "admin" ? null : department;
+export default function NotificationsRoute() {
+  const [data, setData] = useState<NotificationsData | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const items = await getNotificationFeed(scope, 40);
+  useEffect(() => {
+    fetchNotifications()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err : new Error(String(err))));
+  }, []);
 
-  return <NotificationsPage items={items} />;
+  if (error) return <AdminErrorPanel error={error} />;
+  if (!data) return <AdminLoading />;
+
+  return <NotificationsPage items={data.items} />;
 }

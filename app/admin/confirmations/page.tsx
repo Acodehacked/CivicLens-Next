@@ -1,21 +1,23 @@
-import { and, desc, eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { complaints } from "@/db/schema";
-import { getStaffContext } from "@/lib/auth/staff-context";
+"use client";
+
+import { useEffect, useState } from "react";
 import ConfirmationsQueue from "./ConfirmationsQueue";
+import AdminErrorPanel from "../components/AdminErrorPanel";
+import AdminLoading from "../components/AdminLoading";
+import { fetchConfirmations, type ConfirmationsData } from "@/lib/api/admin";
 
-export default async function ConfirmationsPage() {
-  const { role, department } = await getStaffContext();
+export default function ConfirmationsPage() {
+  const [data, setData] = useState<ConfirmationsData | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const openOnly = eq(complaints.status, "open");
-  const where = role === "admin" ? openOnly : and(openOnly, eq(complaints.department, department!));
+  useEffect(() => {
+    fetchConfirmations()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err : new Error(String(err))));
+  }, []);
 
-  const pending = await db
-    .select()
-    .from(complaints)
-    .where(where)
-    .orderBy(desc(complaints.priorityScore))
-    .limit(200);
+  if (error) return <AdminErrorPanel error={error} />;
+  if (!data) return <AdminLoading />;
 
-  return <ConfirmationsQueue pending={pending} isAdmin={role === "admin"} />;
+  return <ConfirmationsQueue pending={data.pending} isAdmin={data.isAdmin} />;
 }

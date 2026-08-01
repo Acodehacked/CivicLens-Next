@@ -1,29 +1,29 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
-import { db } from "@/db/client";
-import { complaints } from "@/db/schema";
-import { getStaffContext } from "@/lib/auth/staff-context";
-import { DEPARTMENTS } from "@/lib/constants/departments";
+"use client";
+
+import { useEffect, useState } from "react";
 import PriorityQueuePage from "@/app/admin/pages/priority-queue/PriorityQueuePage";
+import AdminErrorPanel from "../components/AdminErrorPanel";
+import AdminLoading from "../components/AdminLoading";
+import { fetchPriorityQueue, type PriorityQueueData } from "@/lib/api/admin";
 
-export default async function PriorityQueueRoute() {
-  const { role, department } = await getStaffContext();
+export default function PriorityQueueRoute() {
+  const [data, setData] = useState<PriorityQueueData | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const activeOnly = inArray(complaints.status, ["open", "in_progress"]);
-  const where =
-    role === "admin" ? activeOnly : and(activeOnly, eq(complaints.department, department!));
+  useEffect(() => {
+    fetchPriorityQueue()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err : new Error(String(err))));
+  }, []);
 
-  const reports = await db
-    .select()
-    .from(complaints)
-    .where(where)
-    .orderBy(desc(complaints.priorityScore))
-    .limit(100);
+  if (error) return <AdminErrorPanel error={error} />;
+  if (!data) return <AdminLoading />;
 
   return (
     <PriorityQueuePage
-      reports={reports}
-      isAdmin={role === "admin"}
-      departments={DEPARTMENTS}
+      reports={data.reports}
+      isAdmin={data.isAdmin}
+      departments={data.departments}
     />
   );
 }

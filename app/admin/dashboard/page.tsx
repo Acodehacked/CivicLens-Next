@@ -1,4 +1,6 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+"use client";
+
+import { useEffect, useState } from "react";
 import KPICards from "../components/KPICards";
 import ReportsTable from "../components/ReportsTable";
 import PriorityQueue from "../components/PriorityQueue";
@@ -6,46 +8,25 @@ import DepartmentPerformance from "../components/DepartmentPerformance";
 import AnalyticsCharts from "../components/AnalyticsCharts";
 import AIInsightsPanel from "../components/AIInsightsPanel";
 import RecentActivity from "../components/RecentActivity";
-import { getStaffContext } from "@/lib/auth/staff-context";
-import { db } from "@/db/client";
-import { complaints } from "@/db/schema";
-import {
-  getOverviewStats,
-  getDailyTrend,
-  getCategoryBreakdown,
-  getDepartmentPerformance,
-  getRecentEvents,
-  getMapMarkers,
-} from "@/lib/data/analytics";
+import AdminErrorPanel from "../components/AdminErrorPanel";
+import AdminLoading from "../components/AdminLoading";
+import { fetchDashboard, type DashboardData } from "@/lib/api/admin";
 import DashboardMapClient from "./DashboardMapClient";
 
-export default async function AdminDashboardPage() {
-  const { role, department } = await getStaffContext();
-  const scope = role === "admin" ? null : department;
-  const deptFilter = scope ? eq(complaints.department, scope) : undefined;
-  const activeOnly = inArray(complaints.status, ["open", "in_progress"]);
+export default function AdminDashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const [stats, dailyTrend, categoryBreakdown, departmentPerformance, recentEvents, mapMarkers, priorityItems, recentComplaints] =
-    await Promise.all([
-      getOverviewStats(scope),
-      getDailyTrend(scope, 7),
-      getCategoryBreakdown(scope),
-      getDepartmentPerformance(),
-      getRecentEvents(scope, 5),
-      getMapMarkers(scope, 300),
-      db
-        .select()
-        .from(complaints)
-        .where(deptFilter ? and(activeOnly, deptFilter) : activeOnly)
-        .orderBy(desc(complaints.priorityScore))
-        .limit(3),
-      db
-        .select()
-        .from(complaints)
-        .where(deptFilter)
-        .orderBy(desc(complaints.lastReportedAt))
-        .limit(6),
-    ]);
+  useEffect(() => {
+    fetchDashboard()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err : new Error(String(err))));
+  }, []);
+
+  if (error) return <AdminErrorPanel error={error} />;
+  if (!data) return <AdminLoading />;
+
+  const { stats, dailyTrend, categoryBreakdown, departmentPerformance, recentEvents, mapMarkers, priorityItems, recentComplaints } = data;
 
   return (
     <div className="p-3 sm:p-5 lg:p-8 max-w-[1600px] mx-auto flex flex-col xl:flex-row gap-4 sm:gap-6">

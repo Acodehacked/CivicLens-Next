@@ -1,18 +1,10 @@
-import { getStaffContext } from "@/lib/auth/staff-context";
-import {
-  getOverviewStats,
-  getTrendComparison,
-  getCategoryBreakdown,
-  getSeverityByCategory,
-  getDailyTrend,
-  getMonthlyTrend,
-  getDepartmentPerformance,
-  getTopLocations,
-  getRecentEvents,
-  getMapMarkers,
-  getTotalReportsSubmitted,
-} from "@/lib/data/analytics";
+"use client";
+
+import { useCallback, useEffect, useState, useTransition } from "react";
 import RefreshHeader from "./RefreshHeader";
+import AdminErrorPanel from "../components/AdminErrorPanel";
+import AdminLoading from "../components/AdminLoading";
+import { fetchAnalytics, type AnalyticsData } from "@/lib/api/admin";
 import KPICards from "@/app/admin/pages/analytics/components/KPICards";
 import ReportTrendsChart from "@/app/admin/pages/analytics/components/ReportTrendsChart";
 import CategoryDonutChart from "@/app/admin/pages/analytics/components/CategoryDonutChart";
@@ -25,11 +17,23 @@ import TopLocationsTable from "@/app/admin/pages/analytics/components/TopLocatio
 import RecentAIInsightsTimeline from "@/app/admin/pages/analytics/components/RecentAIInsightsTimeline";
 import AnalyticsAIPanel from "@/app/admin/pages/analytics/components/AnalyticsAIPanel";
 
-export default async function AnalyticsPage() {
-  const { role, department } = await getStaffContext();
-  const scope = role === "admin" ? null : department;
+export default function AnalyticsPage() {
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const [
+  const load = useCallback(() => {
+    fetchAnalytics()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err : new Error(String(err))));
+  }, []);
+
+  useEffect(load, [load]);
+
+  if (error) return <AdminErrorPanel error={error} />;
+  if (!data) return <AdminLoading />;
+
+  const {
     stats,
     trend,
     categories,
@@ -41,26 +45,14 @@ export default async function AnalyticsPage() {
     recentEvents,
     mapMarkers,
     totalReportsSubmitted,
-  ] = await Promise.all([
-    getOverviewStats(scope),
-    getTrendComparison(scope, 7),
-    getCategoryBreakdown(scope),
-    getSeverityByCategory(scope),
-    getDailyTrend(scope, 30),
-    getMonthlyTrend(scope, 12),
-    getDepartmentPerformance(),
-    getTopLocations(scope, 8),
-    getRecentEvents(scope, 6),
-    getMapMarkers(scope, 300),
-    getTotalReportsSubmitted(scope),
-  ]);
+  } = data;
 
   return (
     <div className="flex-1 flex overflow-hidden relative bg-[#F8FAFC]">
       {/* Center workspace */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6 pb-24">
-          <RefreshHeader />
+          <RefreshHeader onRefresh={() => startTransition(load)} isRefreshing={isPending} />
           <KPICards stats={stats} trend={trend} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

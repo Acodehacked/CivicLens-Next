@@ -1,20 +1,23 @@
-import { desc, eq } from "drizzle-orm";
-import { db } from "@/db/client";
-import { complaints } from "@/db/schema";
-import { getStaffContext } from "@/lib/auth/staff-context";
+"use client";
+
+import { useEffect, useState } from "react";
 import IssuesTable from "./IssuesTable";
+import AdminErrorPanel from "../components/AdminErrorPanel";
+import AdminLoading from "../components/AdminLoading";
+import { fetchIssues, type IssuesData } from "@/lib/api/admin";
 
-export default async function IssuesPage() {
-  const { role, department } = await getStaffContext();
+export default function IssuesPage() {
+  const [data, setData] = useState<IssuesData | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  const where = role === "admin" ? undefined : eq(complaints.department, department!);
+  useEffect(() => {
+    fetchIssues()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err : new Error(String(err))));
+  }, []);
 
-  const issues = await db
-    .select()
-    .from(complaints)
-    .where(where)
-    .orderBy(desc(complaints.lastReportedAt))
-    .limit(200);
+  if (error) return <AdminErrorPanel error={error} />;
+  if (!data) return <AdminLoading />;
 
-  return <IssuesTable issues={issues} isAdmin={role === "admin"} />;
+  return <IssuesTable issues={data.issues} isAdmin={data.isAdmin} />;
 }
