@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
+import { withTimeout } from "@/lib/api/with-timeout";
 import { db } from "@/db/client";
 import { complaints } from "@/db/schema";
 import { DEPARTMENT_LABELS, type DepartmentType } from "@/lib/constants/departments";
@@ -17,10 +18,12 @@ export async function GET() {
         ? eq(complaints.status, "open")
         : and(eq(complaints.status, "open"), eq(complaints.department, department as DepartmentType));
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)`.mapWith(Number) })
-      .from(complaints)
-      .where(openScope);
+    const [{ count }] = await withTimeout(
+      db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(complaints)
+        .where(openScope)
+    );
 
     const displayName = fullName || email || "Staff";
     const roleLabel =

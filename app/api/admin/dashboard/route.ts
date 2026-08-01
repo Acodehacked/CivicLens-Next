@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
+import { withTimeout } from "@/lib/api/with-timeout";
 import { DEMO_DASHBOARD } from "@/lib/data/admin-demo";
 import { db } from "@/db/client";
 import { complaints } from "@/db/schema";
@@ -24,26 +25,28 @@ export async function GET() {
     const activeOnly = inArray(complaints.status, ["open", "in_progress"]);
 
     const [stats, dailyTrend, categoryBreakdown, departmentPerformance, recentEvents, mapMarkers, priorityItems, recentComplaints] =
-      await Promise.all([
-        getOverviewStats(scope),
-        getDailyTrend(scope, 7),
-        getCategoryBreakdown(scope),
-        getDepartmentPerformance(),
-        getRecentEvents(scope, 5),
-        getMapMarkers(scope, 300),
-        db
-          .select()
-          .from(complaints)
-          .where(deptFilter ? and(activeOnly, deptFilter) : activeOnly)
-          .orderBy(desc(complaints.priorityScore))
-          .limit(3),
-        db
-          .select()
-          .from(complaints)
-          .where(deptFilter)
-          .orderBy(desc(complaints.lastReportedAt))
-          .limit(6),
-      ]);
+      await withTimeout(
+        Promise.all([
+          getOverviewStats(scope),
+          getDailyTrend(scope, 7),
+          getCategoryBreakdown(scope),
+          getDepartmentPerformance(),
+          getRecentEvents(scope, 5),
+          getMapMarkers(scope, 300),
+          db
+            .select()
+            .from(complaints)
+            .where(deptFilter ? and(activeOnly, deptFilter) : activeOnly)
+            .orderBy(desc(complaints.priorityScore))
+            .limit(3),
+          db
+            .select()
+            .from(complaints)
+            .where(deptFilter)
+            .orderBy(desc(complaints.lastReportedAt))
+            .limit(6),
+        ])
+      );
 
     return NextResponse.json({
       stats,

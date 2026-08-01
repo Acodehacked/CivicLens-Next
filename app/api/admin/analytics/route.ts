@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
+import { withTimeout } from "@/lib/api/with-timeout";
 import { DEMO_ANALYTICS } from "@/lib/data/admin-demo";
 import {
   getOverviewStats,
@@ -35,19 +36,21 @@ export async function GET() {
       recentEvents,
       mapMarkers,
       totalReportsSubmitted,
-    ] = await Promise.all([
-      getOverviewStats(scope),
-      getTrendComparison(scope, 7),
-      getCategoryBreakdown(scope),
-      getSeverityByCategory(scope),
-      getDailyTrend(scope, 30),
-      getMonthlyTrend(scope, 12),
-      getDepartmentPerformance(),
-      getTopLocations(scope, 8),
-      getRecentEvents(scope, 6),
-      getMapMarkers(scope, 300),
-      getTotalReportsSubmitted(scope),
-    ]);
+    ] = await withTimeout(
+      Promise.all([
+        getOverviewStats(scope),
+        getTrendComparison(scope, 7),
+        getCategoryBreakdown(scope),
+        getSeverityByCategory(scope),
+        getDailyTrend(scope, 30),
+        getMonthlyTrend(scope, 12),
+        getDepartmentPerformance(),
+        getTopLocations(scope, 8),
+        getRecentEvents(scope, 6),
+        getMapMarkers(scope, 300),
+        getTotalReportsSubmitted(scope),
+      ])
+    );
 
     return NextResponse.json({
       stats,

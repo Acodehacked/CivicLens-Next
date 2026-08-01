@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
+import { withTimeout } from "@/lib/api/with-timeout";
 import { DEMO_SETTINGS } from "@/lib/data/admin-demo";
 import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
@@ -12,16 +13,20 @@ export async function GET() {
   const { userId, role, department, fullName, email } = auth.context;
 
   try {
-    const [profileRow] = await db
-      .select({ emailNotificationsEnabled: profiles.emailNotificationsEnabled })
-      .from(profiles)
-      .where(eq(profiles.id, userId));
+    const [profileRow] = await withTimeout(
+      db
+        .select({ emailNotificationsEnabled: profiles.emailNotificationsEnabled })
+        .from(profiles)
+        .where(eq(profiles.id, userId))
+    );
 
     const scope = role === "admin" ? null : department;
-    const [staff, departmentSettings] = await Promise.all([
-      getStaffDirectory(scope),
-      role === "admin" ? getDepartmentSettings() : Promise.resolve([]),
-    ]);
+    const [staff, departmentSettings] = await withTimeout(
+      Promise.all([
+        getStaffDirectory(scope),
+        role === "admin" ? getDepartmentSettings() : Promise.resolve([]),
+      ])
+    );
 
     return NextResponse.json({
       profile: {

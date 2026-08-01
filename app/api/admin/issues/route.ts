@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
+import { withTimeout } from "@/lib/api/with-timeout";
 import { DEMO_ISSUES } from "@/lib/data/admin-demo";
 import { db } from "@/db/client";
 import { complaints } from "@/db/schema";
@@ -13,12 +14,14 @@ export async function GET() {
   try {
     const where = role === "admin" ? undefined : eq(complaints.department, department!);
 
-    const issues = await db
-      .select()
-      .from(complaints)
-      .where(where)
-      .orderBy(desc(complaints.lastReportedAt))
-      .limit(200);
+    const issues = await withTimeout(
+      db
+        .select()
+        .from(complaints)
+        .where(where)
+        .orderBy(desc(complaints.lastReportedAt))
+        .limit(200)
+    );
 
     return NextResponse.json({ issues, isAdmin: role === "admin" });
   } catch (err) {

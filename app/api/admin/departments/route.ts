@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
+import { withTimeout } from "@/lib/api/with-timeout";
 import { DEMO_DEPARTMENTS_DATA } from "@/lib/data/admin-demo";
 import { getDepartmentPerformance } from "@/lib/data/analytics";
 
@@ -8,7 +9,7 @@ export async function GET() {
   if (!auth.ok) return auth.response;
 
   try {
-    const departments = await getDepartmentPerformance();
+    const departments = await withTimeout(getDepartmentPerformance());
     return NextResponse.json({ departments });
   } catch (err) {
     console.error("[api/admin/departments] falling back to demo data:", err);

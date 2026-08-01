@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
+import { withTimeout } from "@/lib/api/with-timeout";
 import { DEMO_NOTIFICATIONS_DATA } from "@/lib/data/admin-demo";
 import { getNotificationFeed } from "@/lib/data/analytics";
 
@@ -10,7 +11,7 @@ export async function GET() {
 
   try {
     const scope = role === "admin" ? null : department;
-    const items = await getNotificationFeed(scope, 40);
+    const items = await withTimeout(getNotificationFeed(scope, 40));
     return NextResponse.json({ items });
   } catch (err) {
     console.error("[api/admin/notifications] falling back to demo data:", err);
