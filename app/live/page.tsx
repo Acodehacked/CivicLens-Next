@@ -26,6 +26,11 @@ const STATUS_DOT: Record<string, string> = {
 // Public transparency feed - every citizen's recent activity city-wide, not
 // just the signed-in user's own reports (that's /my-reports). No login
 // required, matching /report allowing anonymous submissions.
+//
+// Must be fetched per-request, not baked into the static build. See
+// app/community-map/page.tsx for why.
+export const dynamic = "force-dynamic";
+
 export default async function LivePage() {
   const recent = await db
     .select()

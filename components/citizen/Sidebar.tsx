@@ -11,6 +11,7 @@ import {
   ListChecks,
   Radio,
   Building2,
+  Settings,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut
@@ -22,6 +23,7 @@ const navItems = [
   { icon: ListChecks, label: "My Reports", href: "/my-reports" },
   { icon: Radio, label: "Live Feed", href: "/live" },
   { icon: Building2, label: "Departments", href: "/departments" },
+  { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 export default function Sidebar({

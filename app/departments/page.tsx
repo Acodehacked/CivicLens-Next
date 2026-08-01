@@ -4,6 +4,10 @@ import { db } from "@/db/client";
 import { departments, complaints } from "@/db/schema";
 import { DEPARTMENT_LABELS, type DepartmentType } from "@/lib/constants/departments";
 
+// Live department stats - must be fetched per-request, not baked into the
+// static build. See app/community-map/page.tsx for why.
+export const dynamic = "force-dynamic";
+
 export default async function DepartmentsPage() {
   const stats = await db
     .select({
