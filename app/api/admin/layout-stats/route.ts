@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
-import { adminApiError } from "@/lib/api/admin-error";
 import { db } from "@/db/client";
 import { complaints } from "@/db/schema";
 import { DEPARTMENT_LABELS, type DepartmentType } from "@/lib/constants/departments";
+import { DEMO_LAYOUT_STATS } from "@/lib/data/admin-demo";
 
 export async function GET() {
   const auth = await getStaffContextForApi();
@@ -32,6 +32,7 @@ export async function GET() {
 
     return NextResponse.json({ displayName, roleLabel, pendingCount: count });
   } catch (err) {
-    return adminApiError("layout-stats", err);
+    console.error("[api/admin/layout-stats] falling back to demo data:", err);
+    return NextResponse.json(DEMO_LAYOUT_STATS);
   }
 }

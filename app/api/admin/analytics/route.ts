@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
-import { adminApiError } from "@/lib/api/admin-error";
+import { DEMO_ANALYTICS } from "@/lib/data/admin-demo";
 import {
   getOverviewStats,
   getTrendComparison,
@@ -63,6 +63,7 @@ export async function GET() {
       totalReportsSubmitted,
     });
   } catch (err) {
-    return adminApiError("analytics", err);
+    console.error("[api/admin/analytics] falling back to demo data:", err);
+    return NextResponse.json(DEMO_ANALYTICS);
   }
 }

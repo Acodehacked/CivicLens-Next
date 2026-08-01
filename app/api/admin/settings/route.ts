@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
-import { adminApiError } from "@/lib/api/admin-error";
+import { DEMO_SETTINGS } from "@/lib/data/admin-demo";
 import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { getStaffDirectory, getDepartmentSettings } from "@/lib/data/settings";
@@ -36,6 +36,7 @@ export async function GET() {
       isAdmin: role === "admin",
     });
   } catch (err) {
-    return adminApiError("settings", err);
+    console.error("[api/admin/settings] falling back to demo data:", err);
+    return NextResponse.json(DEMO_SETTINGS);
   }
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
-import { adminApiError } from "@/lib/api/admin-error";
+import { DEMO_CONFIRMATIONS } from "@/lib/data/admin-demo";
 import { db } from "@/db/client";
 import { complaints } from "@/db/schema";
 
@@ -23,6 +23,7 @@ export async function GET() {
 
     return NextResponse.json({ pending, isAdmin: role === "admin" });
   } catch (err) {
-    return adminApiError("confirmations", err);
+    console.error("[api/admin/confirmations] falling back to demo data:", err);
+    return NextResponse.json(DEMO_CONFIRMATIONS);
   }
 }

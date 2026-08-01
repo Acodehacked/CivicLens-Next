@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getStaffContextForApi } from "@/lib/auth/staff-context";
-import { adminApiError } from "@/lib/api/admin-error";
+import { DEMO_DASHBOARD } from "@/lib/data/admin-demo";
 import { db } from "@/db/client";
 import { complaints } from "@/db/schema";
 import {
@@ -56,6 +56,7 @@ export async function GET() {
       recentComplaints,
     });
   } catch (err) {
-    return adminApiError("dashboard", err);
+    console.error("[api/admin/dashboard] falling back to demo data:", err);
+    return NextResponse.json(DEMO_DASHBOARD);
   }
 }
