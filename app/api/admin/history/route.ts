@@ -11,13 +11,10 @@ export async function GET() {
 
   try {
     const scope = role === "admin" ? null : department;
-    const [entries, avgResolutionHours, stats] = await withTimeout(
-      Promise.all([
-        getHistoryLog(scope, 100),
-        getAvgResolutionHours(scope),
-        getOverviewStats(scope),
-      ])
-    );
+    // One at a time rather than Promise.all - see dashboard/route.ts.
+    const entries = await withTimeout(getHistoryLog(scope, 100));
+    const avgResolutionHours = await withTimeout(getAvgResolutionHours(scope));
+    const stats = await withTimeout(getOverviewStats(scope));
 
     return NextResponse.json({ entries, avgResolutionHours, stats });
   } catch (err) {

@@ -24,29 +24,32 @@ export async function GET() {
     const deptFilter = scope ? eq(complaints.department, scope) : undefined;
     const activeOnly = inArray(complaints.status, ["open", "in_progress"]);
 
-    const [stats, dailyTrend, categoryBreakdown, departmentPerformance, recentEvents, mapMarkers, priorityItems, recentComplaints] =
-      await withTimeout(
-        Promise.all([
-          getOverviewStats(scope),
-          getDailyTrend(scope, 7),
-          getCategoryBreakdown(scope),
-          getDepartmentPerformance(),
-          getRecentEvents(scope, 5),
-          getMapMarkers(scope, 300),
-          db
-            .select()
-            .from(complaints)
-            .where(deptFilter ? and(activeOnly, deptFilter) : activeOnly)
-            .orderBy(desc(complaints.priorityScore))
-            .limit(3),
-          db
-            .select()
-            .from(complaints)
-            .where(deptFilter)
-            .orderBy(desc(complaints.lastReportedAt))
-            .limit(6),
-        ])
-      );
+    // One at a time rather than Promise.all - concurrent queries pipelined
+    // over this module's single pooled connection (max: 1) don't play well
+    // with Supabase's transaction-mode pooler, which has been the source of
+    // the hangs/timeouts seen against this project's DB.
+    const stats = await withTimeout(getOverviewStats(scope));
+    const dailyTrend = await withTimeout(getDailyTrend(scope, 7));
+    const categoryBreakdown = await withTimeout(getCategoryBreakdown(scope));
+    const departmentPerformance = await withTimeout(getDepartmentPerformance());
+    const recentEvents = await withTimeout(getRecentEvents(scope, 5));
+    const mapMarkers = await withTimeout(getMapMarkers(scope, 300));
+    const priorityItems = await withTimeout(
+      db
+        .select()
+        .from(complaints)
+        .where(deptFilter ? and(activeOnly, deptFilter) : activeOnly)
+        .orderBy(desc(complaints.priorityScore))
+        .limit(3)
+    );
+    const recentComplaints = await withTimeout(
+      db
+        .select()
+        .from(complaints)
+        .where(deptFilter)
+        .orderBy(desc(complaints.lastReportedAt))
+        .limit(6)
+    );
 
     return NextResponse.json({
       stats,

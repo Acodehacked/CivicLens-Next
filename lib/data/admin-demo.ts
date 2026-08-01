@@ -102,7 +102,7 @@ const DEMO_STATS: OverviewStats = {
   duplicate: 1,
   critical: 5,
   avgPriority: 61.4,
-  avgConfidence: 87.2,
+  avgConfidence: 0.872,
   avgSimilarity: 0.34,
   safetyRiskCount: 3,
   mergedCount: 6,

@@ -24,33 +24,18 @@ export async function GET() {
   try {
     const scope = role === "admin" ? null : department;
 
-    const [
-      stats,
-      trend,
-      categories,
-      severityByCategory,
-      daily,
-      monthly,
-      departmentPerformance,
-      topLocations,
-      recentEvents,
-      mapMarkers,
-      totalReportsSubmitted,
-    ] = await withTimeout(
-      Promise.all([
-        getOverviewStats(scope),
-        getTrendComparison(scope, 7),
-        getCategoryBreakdown(scope),
-        getSeverityByCategory(scope),
-        getDailyTrend(scope, 30),
-        getMonthlyTrend(scope, 12),
-        getDepartmentPerformance(),
-        getTopLocations(scope, 8),
-        getRecentEvents(scope, 6),
-        getMapMarkers(scope, 300),
-        getTotalReportsSubmitted(scope),
-      ])
-    );
+    // One at a time rather than Promise.all - see dashboard/route.ts.
+    const stats = await withTimeout(getOverviewStats(scope));
+    const trend = await withTimeout(getTrendComparison(scope, 7));
+    const categories = await withTimeout(getCategoryBreakdown(scope));
+    const severityByCategory = await withTimeout(getSeverityByCategory(scope));
+    const daily = await withTimeout(getDailyTrend(scope, 30));
+    const monthly = await withTimeout(getMonthlyTrend(scope, 12));
+    const departmentPerformance = await withTimeout(getDepartmentPerformance());
+    const topLocations = await withTimeout(getTopLocations(scope, 8));
+    const recentEvents = await withTimeout(getRecentEvents(scope, 6));
+    const mapMarkers = await withTimeout(getMapMarkers(scope, 300));
+    const totalReportsSubmitted = await withTimeout(getTotalReportsSubmitted(scope));
 
     return NextResponse.json({
       stats,

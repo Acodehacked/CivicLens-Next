@@ -21,12 +21,9 @@ export async function GET() {
     );
 
     const scope = role === "admin" ? null : department;
-    const [staff, departmentSettings] = await withTimeout(
-      Promise.all([
-        getStaffDirectory(scope),
-        role === "admin" ? getDepartmentSettings() : Promise.resolve([]),
-      ])
-    );
+    // One at a time rather than Promise.all - see dashboard/route.ts.
+    const staff = await withTimeout(getStaffDirectory(scope));
+    const departmentSettings = role === "admin" ? await withTimeout(getDepartmentSettings()) : [];
 
     return NextResponse.json({
       profile: {
